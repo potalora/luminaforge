@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Core backgrounds */
+  --bg-primary: #0D0D0F;
+  --bg-secondary: #161619;
+  --bg-tertiary: #1E1E22;
+  --bg-elevated: #252529;
+
+  /* Accent — warm amber/copper */
+  --accent-primary: #E08A3C;
+  --accent-secondary: #C4722E;
+  --accent-subtle: #E08A3C1A;
+  --accent-glow: #E08A3C33;
+
+  /* Text */
+  --text-primary: #F0EDE8;
+  --text-secondary: #9B978F;
+  --text-tertiary: #5C5952;
+
+  /* Semantic */
+  --success: #6BBF6A;
+  --warning: #E0C33C;
+  --error: #D94B4B;
+
+  /* Viewport */
+  --grid-color: #1A1A1E;
+  --model-base: #D4C4A8;
+  --model-highlight: #E08A3C;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Slider styling */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type='range']::-webkit-slider-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-tertiary);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  margin-top: -6px;
+  border: 2px solid var(--bg-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  box-shadow: var(--shadow-glow);
+  transform: scale(1.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}

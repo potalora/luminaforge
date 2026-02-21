@@ -30,6 +30,9 @@ coverage/
 playwright-report/
 test-results/
 
+# TypeScript
+tsconfig.tsbuildinfo
+
 # Misc
 *.log
 npm-debug.log*
