@@ -37,5 +37,8 @@ tsconfig.tsbuildinfo
 *.log
 npm-debug.log*
 
+# Worktrees
+.worktrees/
+
 # Project — CLAUDE.md is local-only, never pushed to remotes
 CLAUDE.md
