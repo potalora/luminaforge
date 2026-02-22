@@ -30,7 +30,7 @@ export interface ToggleConfig extends BaseParamConfig {
 
 export type ParamConfig = SliderConfig | SelectConfig | ToggleConfig;
 
-/** Shape parameters — profile picker is separate, these are sliders/selects */
+/** Shape parameters — cross-section picker is separate, these are sliders */
 export const SHAPE_PARAMS: ParamConfig[] = [
   {
     key: 'height',
@@ -59,6 +59,14 @@ export const SHAPE_PARAMS: ParamConfig[] = [
     step: 0.01,
   },
   {
+    key: 'profileCurve',
+    label: 'Profile Curve',
+    type: 'slider',
+    min: -1,
+    max: 1,
+    step: 0.05,
+  },
+  {
     key: 'twistAngle',
     label: 'Twist',
     type: 'slider',
@@ -67,19 +75,85 @@ export const SHAPE_PARAMS: ParamConfig[] = [
     step: 1,
     unit: '\u00B0',
   },
+];
+
+/** Cross-section sub-params — shown conditionally below the picker */
+export const CROSS_SECTION_SUB_PARAMS: ParamConfig[] = [
   {
-    key: 'crossSection',
-    label: 'Cross Section',
-    type: 'select',
-    options: [
-      { value: 'circle', label: 'Circle' },
-      { value: 'polygon', label: 'Polygon' },
-      { value: 'star', label: 'Star' },
-    ],
+    key: 'ovalRatio',
+    label: 'Oval Ratio',
+    type: 'slider',
+    min: 0.4,
+    max: 1.0,
+    step: 0.05,
+    condition: (params) => params.crossSection === 'oval',
+  },
+  {
+    key: 'squircleN',
+    label: 'Roundness',
+    type: 'slider',
+    min: 2.5,
+    max: 5,
+    step: 0.1,
+    condition: (params) => params.crossSection === 'squircle',
+  },
+  {
+    key: 'superN',
+    label: 'Exponent',
+    type: 'slider',
+    min: 0.5,
+    max: 5,
+    step: 0.1,
+    condition: (params) => params.crossSection === 'superellipse',
+  },
+  {
+    key: 'polygonSides',
+    label: 'Sides',
+    type: 'slider',
+    min: 3,
+    max: 12,
+    step: 1,
+    condition: (params) => params.crossSection === 'polygon',
+  },
+  {
+    key: 'starPoints',
+    label: 'Points',
+    type: 'slider',
+    min: 3,
+    max: 12,
+    step: 1,
+    condition: (params) => params.crossSection === 'star',
+  },
+  {
+    key: 'starInnerRatio',
+    label: 'Inner Ratio',
+    type: 'slider',
+    min: 0.2,
+    max: 0.8,
+    step: 0.05,
+    condition: (params) => params.crossSection === 'star',
+  },
+  {
+    key: 'gearTeeth',
+    label: 'Teeth',
+    type: 'slider',
+    min: 6,
+    max: 24,
+    step: 1,
+    condition: (params) => params.crossSection === 'gear',
+  },
+  {
+    key: 'petalCount',
+    label: 'Petals',
+    type: 'slider',
+    min: 3,
+    max: 8,
+    step: 1,
+    condition: (params) => params.crossSection === 'flower',
   },
 ];
 
-/** Ridge parameters — promoted to their own section */
+/** Ridge parameters — shown only in classic style */
 export const RIDGE_PARAMS: ParamConfig[] = [
   {
     key: 'ridgeCount',
@@ -97,6 +171,45 @@ export const RIDGE_PARAMS: ParamConfig[] = [
     max: 20,
     step: 0.5,
     unit: 'mm',
+  },
+  {
+    key: 'smoothInnerWall',
+    label: 'Smooth Inner Wall',
+    type: 'toggle',
+    options: [
+      { value: 'true', label: 'Smooth' },
+      { value: 'false', label: 'Ridged' },
+    ],
+  },
+];
+
+/** Fin parameters — shown only in spiral-fin style */
+export const FIN_PARAMS: ParamConfig[] = [
+  {
+    key: 'finCount',
+    label: 'Fin Count',
+    type: 'slider',
+    min: 4,
+    max: 60,
+    step: 1,
+  },
+  {
+    key: 'finHeight',
+    label: 'Fin Height',
+    type: 'slider',
+    min: 2,
+    max: 30,
+    step: 0.5,
+    unit: 'mm',
+  },
+  {
+    key: 'finWidth',
+    label: 'Fin Width',
+    type: 'slider',
+    min: 1,
+    max: 20,
+    step: 0.5,
+    unit: '\u00B0',
   },
 ];
 
@@ -158,32 +271,6 @@ export const ADVANCED_PARAMS: ParamConfig[] = [
       { value: 'sharp', label: 'Sharp' },
       { value: 'flat', label: 'Flat' },
     ],
-  },
-  {
-    key: 'polygonSides',
-    label: 'Polygon Sides',
-    type: 'slider',
-    min: 3,
-    max: 12,
-    step: 1,
-    condition: (params) => (params.crossSection as CrossSection) === 'polygon',
-  },
-  {
-    key: 'starPoints',
-    label: 'Star Points',
-    type: 'slider',
-    min: 3,
-    max: 12,
-    step: 1,
-    condition: (params) => (params.crossSection as CrossSection) === 'star',
-  },
-  {
-    key: 'starInnerRatio',
-    label: 'Star Inner Ratio',
-    type: 'slider',
-    min: 0.2,
-    max: 0.8,
-    step: 0.05,
-    condition: (params) => (params.crossSection as CrossSection) === 'star',
+    condition: (params) => params.style === 'classic',
   },
 ];

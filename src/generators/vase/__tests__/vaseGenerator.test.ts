@@ -3,7 +3,7 @@ import { geometries } from '@jscad/modeling';
 import type { Geom3 } from '@jscad/modeling';
 import { generateVase } from '../vaseGenerator';
 import { DEFAULT_VASE_PARAMS } from '@/types/design';
-import type { VaseParams, ProfileShape } from '@/types/design';
+import type { VaseParams, CrossSection } from '@/types/design';
 
 // Use low resolution for speed in integration tests
 const LOW_RES_PARAMS: VaseParams = {
@@ -30,7 +30,7 @@ function allVerticesFinite(geom: Geom3): boolean {
 }
 
 describe('generateVase', () => {
-  describe('default parameters', () => {
+  describe('default parameters (classic style)', () => {
     it('returns a non-null Geom3 object', () => {
       const result = generateVase(LOW_RES_PARAMS);
       expect(result).toBeDefined();
@@ -54,10 +54,10 @@ describe('generateVase', () => {
   });
 
   describe('parameter variations', () => {
-    it('cylinder profile with taper=1.0 (no tapering)', () => {
+    it('profileCurve=0 with taper=1.0 (cylinder, no tapering)', () => {
       const params: VaseParams = {
         ...LOW_RES_PARAMS,
-        profileShape: 'cylinder',
+        profileCurve: 0,
         taper: 1.0,
       };
       const result = generateVase(params);
@@ -152,15 +152,32 @@ describe('generateVase', () => {
     });
   });
 
-  describe('all 6 profile shapes', () => {
-    const profiles: ProfileShape[] = [
-      'cylinder', 'tapered', 'bulbous', 'flared', 'hourglass', 'scurve',
-    ];
+  describe('profile curve values', () => {
+    const curves = [-1.0, -0.5, 0.0, 0.5, 1.0];
 
-    it.each(profiles)('%s profile produces non-empty geometry', (shape) => {
+    it.each(curves)('profileCurve=%f produces non-empty geometry', (curve) => {
       const params: VaseParams = {
         ...LOW_RES_PARAMS,
-        profileShape: shape,
+        profileCurve: curve,
+      };
+      const result = generateVase(params);
+      const polygons = getPolygons(result);
+      expect(polygons.length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+  });
+
+  describe('new cross-section shapes', () => {
+    const sampledShapes: CrossSection[] = [
+      'oval', 'squircle', 'superellipse',
+      'heart', 'teardrop', 'petal', 'leaf',
+      'gear', 'flower',
+    ];
+
+    it.each(sampledShapes)('%s cross-section produces valid geometry', (shape) => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        crossSection: shape,
       };
       const result = generateVase(params);
       const polygons = getPolygons(result);
@@ -181,13 +198,134 @@ describe('generateVase', () => {
     });
 
     it('higher resolution produces more polygons', () => {
-      // buildShell clamps circle segments to Math.max(resolution, 32),
-      // so we need resolution > 32 for it to have an effect
       const lowRes = generateVase({ ...LOW_RES_PARAMS, resolution: 32 });
       const highRes = generateVase({ ...LOW_RES_PARAMS, resolution: 64 });
       const lowCount = getPolygons(lowRes).length;
       const highCount = getPolygons(highRes).length;
       expect(highCount).toBeGreaterThan(lowCount);
+    });
+  });
+
+  describe('smooth inner wall', () => {
+    it('smoothInnerWall: true generates valid geometry', () => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        smoothInnerWall: true,
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      };
+      const result = generateVase(params);
+      const polygons = getPolygons(result);
+      expect(polygons.length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('smoothInnerWall: false generates valid geometry', () => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        smoothInnerWall: false,
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      };
+      const result = generateVase(params);
+      const polygons = getPolygons(result);
+      expect(polygons.length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('smooth vs ridged inner wall produce different polygon counts', () => {
+      const base: VaseParams = {
+        ...LOW_RES_PARAMS,
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      };
+      const smooth = generateVase({ ...base, smoothInnerWall: true });
+      const ridged = generateVase({ ...base, smoothInnerWall: false });
+      const smoothCount = getPolygons(smooth).length;
+      const ridgedCount = getPolygons(ridged).length;
+      expect(smoothCount).not.toBe(ridgedCount);
+    });
+  });
+
+  describe('spiral-fin style', () => {
+    const spiralFinParams: VaseParams = {
+      ...LOW_RES_PARAMS,
+      style: 'spiral-fin',
+      finCount: 12,
+      finHeight: 8,
+      finWidth: 5,
+    };
+
+    it('produces non-empty geometry', () => {
+      const result = generateVase(spiralFinParams);
+      const polygons = getPolygons(result);
+      expect(polygons.length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('works with circle cross-section', () => {
+      const params: VaseParams = {
+        ...spiralFinParams,
+        crossSection: 'circle',
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('works with oval cross-section', () => {
+      const params: VaseParams = {
+        ...spiralFinParams,
+        crossSection: 'oval',
+        ovalRatio: 0.7,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('works with flower cross-section', () => {
+      const params: VaseParams = {
+        ...spiralFinParams,
+        crossSection: 'flower',
+        petalCount: 5,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('with twist produces valid geometry', () => {
+      const params: VaseParams = {
+        ...spiralFinParams,
+        twistAngle: 360,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('with profileCurve produces valid geometry', () => {
+      const params: VaseParams = {
+        ...spiralFinParams,
+        profileCurve: 0.5,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('inner wall is always smooth (no fins)', () => {
+      // Spiral-fin forces smooth inner wall. This means inner/outer have
+      // different point counts, which would cause issues if not handled.
+      // The test verifies the generation doesn't crash.
+      const params: VaseParams = {
+        ...spiralFinParams,
+        smoothInnerWall: false, // should be overridden for spiral-fin
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
     });
   });
 });

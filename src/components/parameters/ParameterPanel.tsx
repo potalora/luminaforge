@@ -2,14 +2,17 @@
 
 import { useDesignStore } from '@/store/designStore';
 import { ObjectTypeToggle } from './ObjectTypeToggle';
-import { ProfileShapePicker } from './ProfileShapePicker';
+import { StyleSelector } from './StyleSelector';
+import { CrossSectionPicker } from './CrossSectionPicker';
 import { ParamSection } from './ParamSection';
 import { ParamSlider } from './ParamSlider';
 import { ParamSelect } from './ParamSelect';
 import { ParamToggle } from './ParamToggle';
 import {
   SHAPE_PARAMS,
+  CROSS_SECTION_SUB_PARAMS,
   RIDGE_PARAMS,
+  FIN_PARAMS,
   ADVANCED_PARAMS,
   type ParamConfig,
   type SliderConfig,
@@ -59,12 +62,14 @@ function renderParam(config: ParamConfig) {
   }
 }
 
-/** Full parameter panel: object type toggle + shape + ridges + advanced */
+/** Full parameter panel: object type toggle + style + shape + ridges/fins + advanced */
 export function ParameterPanel() {
   const params = useDesignStore((s) => s.params);
 
   const filterVisible = (configs: ParamConfig[]) =>
     configs.filter((c) => !c.condition || c.condition(params as VaseParams));
+
+  const isClassic = params.style === 'classic';
 
   return (
     <div className="flex flex-col gap-2 p-5 sidebar-gradient">
@@ -74,17 +79,28 @@ export function ParameterPanel() {
 
       <ObjectTypeToggle />
 
+      <div className="mt-3">
+        <StyleSelector />
+      </div>
+
       <div className="mt-4">
         <ParamSection title="Shape" defaultOpen>
-          <ProfileShapePicker />
+          <CrossSectionPicker />
+          {filterVisible(CROSS_SECTION_SUB_PARAMS).map(renderParam)}
           {filterVisible(SHAPE_PARAMS).map(renderParam)}
         </ParamSection>
       </div>
 
       <div className="border-t border-bg-tertiary">
-        <ParamSection title="Ridges" defaultOpen>
-          {filterVisible(RIDGE_PARAMS).map(renderParam)}
-        </ParamSection>
+        {isClassic ? (
+          <ParamSection title="Ridges" defaultOpen>
+            {filterVisible(RIDGE_PARAMS).map(renderParam)}
+          </ParamSection>
+        ) : (
+          <ParamSection title="Fins" defaultOpen>
+            {filterVisible(FIN_PARAMS).map(renderParam)}
+          </ParamSection>
+        )}
       </div>
 
       <div className="border-t border-bg-tertiary">
