@@ -93,6 +93,6 @@ Still to come: lamp generator, presets gallery, user accounts, share links.
 
 ## Design
 
-Dark theme. Amber accent (#E08A3C). Cormorant Garamond for display type, Outfit for UI text, IBM Plex Mono for parameter values. The 3D viewport takes most of the screen because that's the point.
+Dark theme. Amber accent (#E08A3C). Cormorant Garamond for display type, Outfit for UI text, IBM Plex Mono for parameter values.
 
 Responsive: sidebar on desktop, bottom sheet on mobile.
