@@ -76,6 +76,12 @@ describe('ParameterPanel', () => {
       expect(screen.queryByTestId('ridgeDepth-slider')).not.toBeInTheDocument();
     });
 
+    it('renders smoothInnerWall toggle in fins section', () => {
+      render(<ParameterPanel />);
+      expect(screen.getByTestId('smoothInnerWall-true')).toBeInTheDocument();
+      expect(screen.getByTestId('smoothInnerWall-false')).toBeInTheDocument();
+    });
+
     it('ridgeProfile hidden in advanced when spiral-fin', async () => {
       const user = userEvent.setup();
       render(<ParameterPanel />);

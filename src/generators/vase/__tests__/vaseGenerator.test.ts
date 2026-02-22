@@ -316,13 +316,87 @@ describe('generateVase', () => {
       expect(allVerticesFinite(result)).toBe(true);
     });
 
-    it('inner wall is always smooth (no fins)', () => {
-      // Spiral-fin forces smooth inner wall. This means inner/outer have
-      // different point counts, which would cause issues if not handled.
-      // The test verifies the generation doesn't crash.
+    it('smoothInnerWall: true produces smooth inner wall', () => {
       const params: VaseParams = {
         ...spiralFinParams,
-        smoothInnerWall: false, // should be overridden for spiral-fin
+        smoothInnerWall: true,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('smoothInnerWall: false produces finned inner wall', () => {
+      const params: VaseParams = {
+        ...spiralFinParams,
+        smoothInnerWall: false,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('smooth vs finned inner wall produce different polygon counts', () => {
+      const smooth = generateVase({ ...spiralFinParams, smoothInnerWall: true });
+      const finned = generateVase({ ...spiralFinParams, smoothInnerWall: false });
+      const smoothCount = getPolygons(smooth).length;
+      const finnedCount = getPolygons(finned).length;
+      expect(smoothCount).not.toBe(finnedCount);
+    });
+  });
+
+  describe('concave shapes with wall thickness (wall inset clamping)', () => {
+    // These shapes have concave regions where a uniform radius offset
+    // would cause inner wall collapse. The per-point clamping should
+    // prevent negative/zero radii.
+    const concaveShapes: { shape: CrossSection; extraParams?: Partial<VaseParams> }[] = [
+      { shape: 'star', extraParams: { starPoints: 5, starInnerRatio: 0.3 } },
+      { shape: 'heart' },
+      { shape: 'teardrop' },
+      { shape: 'petal' },
+      { shape: 'leaf' },
+      { shape: 'gear', extraParams: { gearTeeth: 12 } },
+      { shape: 'flower', extraParams: { petalCount: 5 } },
+    ];
+
+    it.each(concaveShapes)(
+      '$shape with thick wall produces valid geometry',
+      ({ shape, extraParams }) => {
+        const params: VaseParams = {
+          ...LOW_RES_PARAMS,
+          crossSection: shape,
+          wallThickness: 4, // aggressive wall thickness
+          ...extraParams,
+        };
+        const result = generateVase(params);
+        const polygons = getPolygons(result);
+        expect(polygons.length).toBeGreaterThan(0);
+        expect(allVerticesFinite(result)).toBe(true);
+      }
+    );
+
+    it('star with deep inner valleys (low innerRatio) and thick wall', () => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        crossSection: 'star',
+        starPoints: 6,
+        starInnerRatio: 0.2, // very deep valleys
+        wallThickness: 4,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('heart with spiral-fin style and thick wall', () => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        style: 'spiral-fin',
+        crossSection: 'heart',
+        finCount: 12,
+        finHeight: 4,
+        finWidth: 5,
+        wallThickness: 3,
       };
       const result = generateVase(params);
       expect(getPolygons(result).length).toBeGreaterThan(0);
