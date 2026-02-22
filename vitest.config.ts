@@ -2,9 +2,17 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
+  esbuild: {
+    jsx: 'automatic',
+  },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    environmentMatchGlobs: [
+      ['src/components/**', 'jsdom'],
+      ['src/hooks/**', 'jsdom'],
+    ],
+    setupFiles: ['./src/test/setup.ts'],
   },
   resolve: {
     alias: {
