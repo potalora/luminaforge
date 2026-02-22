@@ -212,6 +212,15 @@ export const FIN_PARAMS: ParamConfig[] = [
     max: 4,
     step: 0.1,
   },
+  {
+    key: 'smoothInnerWall',
+    label: 'Smooth Inner Wall',
+    type: 'toggle',
+    options: [
+      { value: 'true', label: 'Smooth' },
+      { value: 'false', label: 'Finned' },
+    ],
+  },
 ];
 
 /** Advanced parameters — collapsible, closed by default */

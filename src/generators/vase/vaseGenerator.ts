@@ -39,15 +39,38 @@ function getShapeSubParams(params: VaseParams): ShapeSubParams {
 }
 
 /**
+ * Shrink each 2D point radially inward by `inset`, clamped so no point's
+ * radius drops below `minRadius`. Prevents wall collapse on concave shapes
+ * where the local radius can be smaller than wallThickness.
+ */
+function applyWallInset(
+  points: [number, number][],
+  inset: number,
+  minRadius: number
+): [number, number][] {
+  return points.map(([x, y]) => {
+    const r = Math.sqrt(x * x + y * y);
+    if (r < 1e-6) return [x, y] as [number, number];
+    const innerR = Math.max(r - inset, minRadius);
+    const scale = innerR / r;
+    return [x * scale, y * scale] as [number, number];
+  });
+}
+
+/**
  * Build a shell (outer or inner) as a solid of revolution with
  * profile curves, twist, and ridge/fin modulation applied per-layer.
+ *
+ * @param wallInset — when > 0, each point is offset radially inward by this
+ *   amount (clamped to a floor) after shape generation. Used for inner shell.
  */
 function buildShell(
   params: VaseParams,
-  radiusOffset: number,
+  wallInset: number,
   skipRidges: boolean = false
 ): Geom3 {
-  const baseRadius = params.diameter / 2 + radiusOffset;
+  const baseRadius = params.diameter / 2;
+  const minRadius = wallInset * 0.3;
   const sliceCount = Math.max(
     Math.ceil(params.height / 2),
     Math.ceil(Math.abs(params.twistAngle) / 10),
@@ -107,9 +130,13 @@ function buildShell(
       baseSlicePoints = applyRidgeModulation(
         scaledBasePoints,
         params.ridgeCount,
-        params.ridgeDepth + radiusOffset,
+        params.ridgeDepth,
         params.ridgeProfile
       );
+    }
+
+    if (wallInset > 0) {
+      baseSlicePoints = applyWallInset(baseSlicePoints, wallInset, minRadius);
     }
   }
 
@@ -160,13 +187,18 @@ function buildShell(
         } else if (skipRidges) {
           layerPoints = scaled;
         } else {
-          const ridgeDepthAtLayer = (params.ridgeDepth + radiusOffset) * profileScale;
+          const ridgeDepthAtLayer = params.ridgeDepth * profileScale;
           layerPoints = applyRidgeModulation(
             scaled,
             params.ridgeCount,
             ridgeDepthAtLayer > 0 ? ridgeDepthAtLayer : 0,
             params.ridgeProfile
           );
+        }
+
+        // Apply per-point wall inset for inner shell (clamped to prevent collapse)
+        if (wallInset > 0) {
+          layerPoints = applyWallInset(layerPoints, wallInset, minRadius);
         }
 
         // Apply twist rotation and translate to height
@@ -195,10 +227,10 @@ export function generateVase(params: VaseParams): Geom3 {
   // Build outer shell (solid)
   const outerShell = buildShell(params, 0);
 
-  // Build inner shell (offset inward by wallThickness)
-  // For spiral-fin: always force smooth inner wall (no fins on inside — physically correct)
-  const forceSmooth = params.style === 'spiral-fin' ? true : params.smoothInnerWall;
-  const innerShell = buildShell(params, -params.wallThickness, forceSmooth);
+  // Build inner shell (per-point inward offset by wallThickness, clamped for concave shapes)
+  // smoothInnerWall toggle controls whether inner wall has ridges/fins for both styles
+  const forceSmooth = params.smoothInnerWall;
+  const innerShell = buildShell(params, params.wallThickness, forceSmooth);
 
   // Move inner shell up by baseThickness so the bottom is solid
   const innerShellRaised = transforms.translate(
