@@ -114,6 +114,29 @@ describe('generateVase (spiral-fin style)', () => {
     expect(allVerticesFinite(result)).toBe(true);
   });
 
+  it('works with polygon cross-section', () => {
+    const params: VaseParams = {
+      ...TEST_PARAMS_SPIRAL_FIN,
+      crossSection: 'polygon',
+      polygonSides: 6,
+    };
+    const result = generateVase(params);
+    expect(getPolygons(result).length).toBeGreaterThan(0);
+    expect(allVerticesFinite(result)).toBe(true);
+  });
+
+  it('works with star cross-section', () => {
+    const params: VaseParams = {
+      ...TEST_PARAMS_SPIRAL_FIN,
+      crossSection: 'star',
+      starPoints: 5,
+      starInnerRatio: 0.5,
+    };
+    const result = generateVase(params);
+    expect(getPolygons(result).length).toBeGreaterThan(0);
+    expect(allVerticesFinite(result)).toBe(true);
+  });
+
   it('smooth vs finned inner wall produce different polygon counts', () => {
     const smooth = generateVase({ ...TEST_PARAMS_SPIRAL_FIN, smoothInnerWall: true });
     const finned = generateVase({ ...TEST_PARAMS_SPIRAL_FIN, smoothInnerWall: false });

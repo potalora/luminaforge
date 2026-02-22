@@ -77,8 +77,8 @@ export function applyRidgeModulation(
         modulation = (Math.cos(ridgeAngle) + 1) / 2;
         break;
       case 'sharp':
-        // Triangle wave (sharper ridges)
-        modulation = Math.abs(((ridgeAngle / Math.PI) % 2) - 1);
+        // Triangle wave (sharper ridges) — normalize to [0,2) to handle negative angles
+        modulation = Math.abs((((ridgeAngle / Math.PI) % 2 + 2) % 2) - 1);
         break;
       case 'flat':
         // Square-ish wave (smoothed step function)
@@ -387,21 +387,14 @@ export function createCrossSection(
   gearTeeth: number = 12,
   petalCount: number = 5
 ): [number, number][] {
-  // For shapes that have fixed geometry (polygon, star), use their native point generators
-  switch (crossSection) {
-    case 'polygon':
-      return createPolygonPoints(radius, polygonSides);
-    case 'star':
-      return createStarPoints(radius, starInnerRatio, starPoints);
-    default:
-      break;
-  }
-
-  // For all other shapes, sample getBaseRadiusAtAngle at uniform angles
+  // Sample getBaseRadiusAtAngle at uniform angles for all shapes
   const subParams: ShapeSubParams = {
     ovalRatio,
     squircleN,
     superN,
+    polygonSides,
+    starPoints,
+    starInnerRatio,
     gearTeeth,
     petalCount,
   };
