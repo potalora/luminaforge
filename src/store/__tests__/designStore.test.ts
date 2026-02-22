@@ -30,11 +30,11 @@ describe('designStore', () => {
 
     it('new params have correct defaults', () => {
       const { params } = store.getState();
-      expect(params.style).toBe('classic');
+      expect(params.style).toBe('spiral-fin');
       expect(params.profileCurve).toBe(0.0);
-      expect(params.finCount).toBe(24);
-      expect(params.finHeight).toBe(8);
-      expect(params.finWidth).toBe(3);
+      expect(params.finCount).toBe(55);
+      expect(params.finHeight).toBe(3.5);
+      expect(params.finWidth).toBe(2.2);
       expect(params.ovalRatio).toBe(0.7);
       expect(params.squircleN).toBe(4);
       expect(params.superN).toBe(2.5);
@@ -105,16 +105,16 @@ describe('designStore', () => {
         ridgeCount: 24,
         style: 'spiral-fin',
         profileCurve: 0.8,
-        finCount: 48,
+        finCount: 40,
       });
       store.getState().resetParams();
       const { params } = store.getState();
       expect(params.height).toBe(DEFAULT_VASE_PARAMS.height);
       expect(params.twistAngle).toBe(DEFAULT_VASE_PARAMS.twistAngle);
       expect(params.ridgeCount).toBe(DEFAULT_VASE_PARAMS.ridgeCount);
-      expect(params.style).toBe('classic');
+      expect(params.style).toBe('spiral-fin');
       expect(params.profileCurve).toBe(0.0);
-      expect(params.finCount).toBe(24);
+      expect(params.finCount).toBe(55);
     });
   });
 

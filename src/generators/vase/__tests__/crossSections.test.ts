@@ -4,6 +4,7 @@ import {
   createPolygonPoints,
   createStarPoints,
   applyRidgeModulation,
+  applyFinModulation,
   createCrossSection,
   getBaseRadiusAtAngle,
   createFinCrossSection,
@@ -208,6 +209,69 @@ describe('applyRidgeModulation', () => {
         expect(Number.isFinite(y)).toBe(true);
       }
     }
+  });
+});
+
+describe('applyFinModulation', () => {
+  const circlePoints = createCirclePoints(10, 128);
+
+  it('returns unchanged points when finCount=0', () => {
+    const result = applyFinModulation(circlePoints, 0, 5, 1.0);
+    expect(result).toBe(circlePoints);
+  });
+
+  it('returns unchanged points when finHeight=0', () => {
+    const result = applyFinModulation(circlePoints, 12, 0, 1.0);
+    expect(result).toBe(circlePoints);
+  });
+
+  it('modulated radii include peaks at baseRadius + finHeight', () => {
+    const baseRadius = 10;
+    const finHeight = 5;
+    const result = applyFinModulation(circlePoints, 6, finHeight, 1.0);
+    const radii = result.map(distFromOrigin);
+    const maxR = Math.max(...radii);
+    expect(maxR).toBeCloseTo(baseRadius + finHeight, 0);
+  });
+
+  it('all coordinates are finite', () => {
+    const result = applyFinModulation(circlePoints, 24, 8, 1.5);
+    for (const [x, y] of result) {
+      expect(Number.isFinite(x)).toBe(true);
+      expect(Number.isFinite(y)).toBe(true);
+    }
+  });
+
+  it('creates finCount peaks around the circle', () => {
+    const finCount = 6;
+    const result = applyFinModulation(
+      createCirclePoints(10, 360),
+      finCount,
+      5,
+      1.0
+    );
+    const radii = result.map(distFromOrigin);
+    let peaks = 0;
+    for (let i = 0; i < radii.length; i++) {
+      const prev = radii[(i - 1 + radii.length) % radii.length];
+      const next = radii[(i + 1) % radii.length];
+      if (radii[i] > prev && radii[i] > next) peaks++;
+    }
+    expect(peaks).toBe(finCount);
+  });
+
+  it('higher broadness produces wider peaks (more points above midpoint)', () => {
+    const baseRadius = 10;
+    const finHeight = 5;
+    const midpoint = baseRadius + finHeight / 2;
+
+    const narrowResult = applyFinModulation(circlePoints, 6, finHeight, 0.3);
+    const wideResult = applyFinModulation(circlePoints, 6, finHeight, 2.0);
+
+    const narrowAbove = narrowResult.filter(pt => distFromOrigin(pt) > midpoint).length;
+    const wideAbove = wideResult.filter(pt => distFromOrigin(pt) > midpoint).length;
+
+    expect(wideAbove).toBeGreaterThan(narrowAbove);
   });
 });
 
@@ -503,11 +567,13 @@ describe('createCrossSection', () => {
 });
 
 describe('createFinCrossSection', () => {
-  it('returns correct number of points: finCount * (5 + arcPointsPerGap)', () => {
+  const finPointCount = 9; // smooth cosine curve points per fin
+
+  it('returns correct number of points: finCount * (finPointCount + arcPointsPerGap)', () => {
     const finCount = 24;
     const arcPointsPerGap = 4;
     const result = createFinCrossSection(40, finCount, 8, 3, 'circle', {}, arcPointsPerGap);
-    expect(result).toHaveLength(finCount * (5 + arcPointsPerGap));
+    expect(result).toHaveLength(finCount * (finPointCount + arcPointsPerGap));
   });
 
   it('fin peaks are taller than body radius', () => {
@@ -525,17 +591,33 @@ describe('createFinCrossSection', () => {
     const arcPointsPerGap = 4;
     const result = createFinCrossSection(baseRadius, finCount, 10, 3, 'circle', {}, arcPointsPerGap);
 
-    // Every fin has 5 points, followed by arcPointsPerGap body points
-    const stride = 5 + arcPointsPerGap;
+    // Every fin has finPointCount points, followed by arcPointsPerGap body points
+    const stride = finPointCount + arcPointsPerGap;
     for (let i = 0; i < finCount; i++) {
-      // Check arc body points (indices 5..8 within each fin group)
-      for (let j = 5; j < stride; j++) {
+      // Check arc body points (indices after fin points within each group)
+      for (let j = finPointCount; j < stride; j++) {
         const pt = result[i * stride + j];
         const r = distFromOrigin(pt);
         // Body points should be near baseRadius (within 1mm tolerance)
         expect(r).toBeGreaterThan(baseRadius * 0.9);
         expect(r).toBeLessThan(baseRadius * 1.1);
       }
+    }
+  });
+
+  it('fin profile is smooth (first and last fin points at body radius)', () => {
+    const baseRadius = 40;
+    const finCount = 12;
+    const arcPointsPerGap = 4;
+    const result = createFinCrossSection(baseRadius, finCount, 10, 5, 'circle', {}, arcPointsPerGap);
+
+    const stride = finPointCount + arcPointsPerGap;
+    for (let i = 0; i < finCount; i++) {
+      // First and last fin points should be at body radius (sin²(0) = 0, sin²(π) = 0)
+      const first = distFromOrigin(result[i * stride]);
+      const last = distFromOrigin(result[i * stride + finPointCount - 1]);
+      expect(first).toBeCloseTo(baseRadius, 0);
+      expect(last).toBeCloseTo(baseRadius, 0);
     }
   });
 
@@ -568,7 +650,7 @@ describe('createFinCrossSection', () => {
     const wideDeg = 100; // Way too wide — should be clamped
     const result = createFinCrossSection(40, finCount, 8, wideDeg, 'circle');
     // Should still produce valid geometry
-    expect(result.length).toBe(finCount * (5 + 4));
+    expect(result.length).toBe(finCount * (finPointCount + 4));
     for (const [x, y] of result) {
       expect(Number.isFinite(x)).toBe(true);
       expect(Number.isFinite(y)).toBe(true);

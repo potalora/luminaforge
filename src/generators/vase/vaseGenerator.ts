@@ -17,7 +17,7 @@ import type { VaseParams } from '@/types/design';
 import {
   createCrossSection,
   applyRidgeModulation,
-  createFinCrossSection,
+  applyFinModulation,
   type ShapeSubParams,
 } from './crossSections';
 import { getProfileScale, getTwistProgress } from './profiles';
@@ -58,60 +58,59 @@ function buildShell(
   const subParams = getShapeSubParams(params);
 
   // Segment count for cross-section
-  const crossSectionSegments =
+  let crossSectionSegments =
     params.crossSection === 'polygon'
       ? params.polygonSides
       : params.crossSection === 'star'
         ? params.starPoints * 2
         : Math.max(params.resolution, 32);
 
-  // Create the base cross-section points (unscaled, at unit radius for classic)
-  // For spiral-fin, we generate at actual radius since fin cross-section uses absolute coords
-  let basePoints: [number, number][];
-
+  // Spiral-fin needs enough samples per fin cycle for smooth cosine waves.
+  // Minimum ~10 points per cycle avoids Nyquist aliasing.
   if (isSpiralFin) {
-    basePoints = createFinCrossSection(
-      baseRadius,
-      params.finCount,
-      params.finHeight,
-      params.finWidth,
-      params.crossSection,
-      subParams
-    );
-  } else {
-    basePoints = createCrossSection(
-      params.crossSection,
-      1, // unit radius — we scale per layer
-      crossSectionSegments,
-      params.polygonSides,
-      params.starPoints,
-      params.starInnerRatio,
-      params.ovalRatio,
-      params.squircleN,
-      params.superN,
-      params.gearTeeth,
-      params.petalCount
-    );
+    crossSectionSegments = Math.max(crossSectionSegments, params.finCount * 10);
   }
+
+  // Create the base cross-section points at unit radius — we scale per layer
+  const basePoints = createCrossSection(
+    params.crossSection,
+    1, // unit radius
+    crossSectionSegments,
+    params.polygonSides,
+    params.starPoints,
+    params.starInnerRatio,
+    params.ovalRatio,
+    params.squircleN,
+    params.superN,
+    params.gearTeeth,
+    params.petalCount
+  );
 
   // Create initial slice (t=0)
   let baseSlicePoints: [number, number][];
 
-  if (isSpiralFin) {
-    // Fin cross-section is already at actual radius
-    baseSlicePoints = basePoints;
-  } else {
+  {
     const scaledBasePoints = basePoints.map(
       ([x, y]) => [x * baseRadius, y * baseRadius] as [number, number]
     );
-    baseSlicePoints = skipRidges
-      ? scaledBasePoints
-      : applyRidgeModulation(
-          scaledBasePoints,
-          params.ridgeCount,
-          params.ridgeDepth + radiusOffset,
-          params.ridgeProfile
-        );
+
+    if (isSpiralFin) {
+      baseSlicePoints = applyFinModulation(
+        scaledBasePoints,
+        params.finCount,
+        params.finHeight,
+        params.finWidth
+      );
+    } else if (skipRidges) {
+      baseSlicePoints = scaledBasePoints;
+    } else {
+      baseSlicePoints = applyRidgeModulation(
+        scaledBasePoints,
+        params.ridgeCount,
+        params.ridgeDepth + radiusOffset,
+        params.ridgeProfile
+      );
+    }
   }
 
   const baseSlice = slice.fromPoints(
@@ -145,35 +144,29 @@ function buildShell(
 
         let layerPoints: [number, number][];
 
+        // Scale unit-radius base points to layer radius
+        const scaled = basePoints.map(
+          ([x, y]) => [x * layerRadius, y * layerRadius] as [number, number]
+        );
+
         if (isSpiralFin) {
-          // Generate fin cross-section at this layer's radius
           const finHeightAtLayer = params.finHeight * profileScale;
-          layerPoints = createFinCrossSection(
-            layerRadius,
+          layerPoints = applyFinModulation(
+            scaled,
             params.finCount,
             finHeightAtLayer,
-            params.finWidth,
-            params.crossSection,
-            subParams
+            params.finWidth
           );
+        } else if (skipRidges) {
+          layerPoints = scaled;
         } else {
-          // Classic mode: scale unit-radius base points to layer radius
-          const scaled = basePoints.map(
-            ([x, y]) => [x * layerRadius, y * layerRadius] as [number, number]
+          const ridgeDepthAtLayer = (params.ridgeDepth + radiusOffset) * profileScale;
+          layerPoints = applyRidgeModulation(
+            scaled,
+            params.ridgeCount,
+            ridgeDepthAtLayer > 0 ? ridgeDepthAtLayer : 0,
+            params.ridgeProfile
           );
-
-          // Apply ridge modulation (skip for smooth inner wall)
-          if (skipRidges) {
-            layerPoints = scaled;
-          } else {
-            const ridgeDepthAtLayer = (params.ridgeDepth + radiusOffset) * profileScale;
-            layerPoints = applyRidgeModulation(
-              scaled,
-              params.ridgeCount,
-              ridgeDepthAtLayer > 0 ? ridgeDepthAtLayer : 0,
-              params.ridgeProfile
-            );
-          }
         }
 
         // Apply twist rotation and translate to height

@@ -62,32 +62,7 @@ describe('ParameterPanel', () => {
     expect(screen.getByTestId('twistAngle-slider')).toBeInTheDocument();
   });
 
-  describe('classic style (default)', () => {
-    it('renders ridges section with ridge params', () => {
-      render(<ParameterPanel />);
-      expect(screen.getByTestId('ridgeCount-slider')).toBeInTheDocument();
-      expect(screen.getByTestId('ridgeDepth-slider')).toBeInTheDocument();
-    });
-
-    it('renders smoothInnerWall toggle in ridges section', () => {
-      render(<ParameterPanel />);
-      expect(screen.getByTestId('smoothInnerWall-true')).toBeInTheDocument();
-      expect(screen.getByTestId('smoothInnerWall-false')).toBeInTheDocument();
-    });
-
-    it('does not render fin params', () => {
-      render(<ParameterPanel />);
-      expect(screen.queryByTestId('finCount-slider')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('finHeight-slider')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('finWidth-slider')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('spiral-fin style', () => {
-    beforeEach(() => {
-      useDesignStore.getState().setParam('style', 'spiral-fin');
-    });
-
+  describe('spiral-fin style (default)', () => {
     it('renders fins section with fin params', () => {
       render(<ParameterPanel />);
       expect(screen.getByTestId('finCount-slider')).toBeInTheDocument();
@@ -106,6 +81,31 @@ describe('ParameterPanel', () => {
       render(<ParameterPanel />);
       await user.click(screen.getByTestId('section-advanced'));
       expect(screen.queryByTestId('ridgeProfile-select')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('classic style', () => {
+    beforeEach(() => {
+      useDesignStore.getState().setParam('style', 'classic');
+    });
+
+    it('renders ridges section with ridge params', () => {
+      render(<ParameterPanel />);
+      expect(screen.getByTestId('ridgeCount-slider')).toBeInTheDocument();
+      expect(screen.getByTestId('ridgeDepth-slider')).toBeInTheDocument();
+    });
+
+    it('renders smoothInnerWall toggle in ridges section', () => {
+      render(<ParameterPanel />);
+      expect(screen.getByTestId('smoothInnerWall-true')).toBeInTheDocument();
+      expect(screen.getByTestId('smoothInnerWall-false')).toBeInTheDocument();
+    });
+
+    it('does not render fin params', () => {
+      render(<ParameterPanel />);
+      expect(screen.queryByTestId('finCount-slider')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('finHeight-slider')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('finWidth-slider')).not.toBeInTheDocument();
     });
   });
 
@@ -175,6 +175,7 @@ describe('ParameterPanel', () => {
     });
 
     it('ridgeProfile shown in advanced for classic style', async () => {
+      useDesignStore.getState().setParam('style', 'classic');
       const user = userEvent.setup();
       render(<ParameterPanel />);
       await user.click(screen.getByTestId('section-advanced'));
@@ -183,19 +184,19 @@ describe('ParameterPanel', () => {
   });
 
   describe('style switching', () => {
-    it('clicking spiral-fin switches to fin params', async () => {
+    it('clicking classic switches to ridge params', async () => {
       const user = userEvent.setup();
       render(<ParameterPanel />);
 
-      // Starts with ridges
-      expect(screen.getByTestId('ridgeCount-slider')).toBeInTheDocument();
-
-      // Click Spiral Fin
-      await user.click(screen.getByTestId('style-spiral-fin'));
-
-      // Now shows fins
+      // Starts with fins (spiral-fin is default)
       expect(screen.getByTestId('finCount-slider')).toBeInTheDocument();
-      expect(screen.queryByTestId('ridgeCount-slider')).not.toBeInTheDocument();
+
+      // Click Classic
+      await user.click(screen.getByTestId('style-classic'));
+
+      // Now shows ridges
+      expect(screen.getByTestId('ridgeCount-slider')).toBeInTheDocument();
+      expect(screen.queryByTestId('finCount-slider')).not.toBeInTheDocument();
     });
   });
 });

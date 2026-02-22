@@ -21,7 +21,7 @@ import {
 } from './parameterConfig';
 import type { VaseParams } from '@/types/design';
 
-function renderParam(config: ParamConfig) {
+function renderParam(config: ParamConfig, params: VaseParams) {
   switch (config.type) {
     case 'slider': {
       const c = config as SliderConfig;
@@ -34,6 +34,7 @@ function renderParam(config: ParamConfig) {
           max={c.max}
           step={c.step}
           unit={c.unit}
+          maxOverride={c.dynamicMax ? c.dynamicMax(params) : undefined}
         />
       );
     }
@@ -73,7 +74,7 @@ export function ParameterPanel() {
 
   return (
     <div className="flex flex-col gap-2 p-5 sidebar-gradient">
-      <h1 className="font-display text-xl text-text-primary tracking-tight mb-2">
+      <h1 className="font-display text-xl font-light text-text-primary tracking-wide mb-2">
         LuminaForge
       </h1>
 
@@ -86,26 +87,26 @@ export function ParameterPanel() {
       <div className="mt-4">
         <ParamSection title="Shape" defaultOpen>
           <CrossSectionPicker />
-          {filterVisible(CROSS_SECTION_SUB_PARAMS).map(renderParam)}
-          {filterVisible(SHAPE_PARAMS).map(renderParam)}
+          {filterVisible(CROSS_SECTION_SUB_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+          {filterVisible(SHAPE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
         </ParamSection>
       </div>
 
       <div className="border-t border-bg-tertiary">
         {isClassic ? (
           <ParamSection title="Ridges" defaultOpen>
-            {filterVisible(RIDGE_PARAMS).map(renderParam)}
+            {filterVisible(RIDGE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
           </ParamSection>
         ) : (
           <ParamSection title="Fins" defaultOpen>
-            {filterVisible(FIN_PARAMS).map(renderParam)}
+            {filterVisible(FIN_PARAMS).map((c) => renderParam(c, params as VaseParams))}
           </ParamSection>
         )}
       </div>
 
       <div className="border-t border-bg-tertiary">
         <ParamSection title="Advanced" defaultOpen={false}>
-          {filterVisible(ADVANCED_PARAMS).map(renderParam)}
+          {filterVisible(ADVANCED_PARAMS).map((c) => renderParam(c, params as VaseParams))}
         </ParamSection>
       </div>
     </div>

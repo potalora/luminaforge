@@ -21,12 +21,16 @@ export const ParamToggle = React.memo(function ParamToggle({
   label,
   options,
 }: ParamToggleProps) {
-  const value = useDesignStore((s) => s.params[paramKey]) as string;
+  const rawValue = useDesignStore((s) => s.params[paramKey]);
+  const value = String(rawValue);
   const setParam = useDesignStore((s) => s.setParam);
 
   const handleClick = useCallback(
     (optValue: string) => {
-      setParam(paramKey, optValue as VaseParams[typeof paramKey]);
+      // Convert 'true'/'false' strings to booleans for boolean params
+      const parsed =
+        optValue === 'true' ? true : optValue === 'false' ? false : optValue;
+      setParam(paramKey, parsed as VaseParams[typeof paramKey]);
     },
     [paramKey, setParam]
   );

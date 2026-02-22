@@ -142,7 +142,7 @@ export const CrossSectionPicker = React.memo(function CrossSectionPicker() {
 
   return (
     <div
-      className="grid grid-cols-4 gap-1.5"
+      className="grid grid-cols-4 gap-2"
       data-testid="cross-section-picker"
       role="radiogroup"
       aria-label="Cross section shape"

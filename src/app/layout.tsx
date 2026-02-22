@@ -1,23 +1,24 @@
 import type { Metadata } from 'next';
-import { Instrument_Serif, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { Cormorant_Garamond, Outfit, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 
-const instrumentSerif = Instrument_Serif({
-  weight: '400',
+const cormorantGaramond = Cormorant_Garamond({
+  weight: ['300', '400', '500'],
   subsets: ['latin'],
-  variable: '--font-instrument-serif',
+  variable: '--font-cormorant',
   display: 'swap',
 });
 
-const dmSans = DM_Sans({
+const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-dm-sans',
+  variable: '--font-outfit',
   display: 'swap',
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ['400', '500'],
   subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
+  variable: '--font-ibm-plex-mono',
   display: 'swap',
 });
 
@@ -35,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
+      className={`${cormorantGaramond.variable} ${outfit.variable} ${ibmPlexMono.variable}`}
     >
       <body className="font-sans antialiased">{children}</body>
     </html>

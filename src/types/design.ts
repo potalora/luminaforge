@@ -49,9 +49,9 @@ export interface VaseParams {
   petalCount: number; // 3-8, for flower
 
   // Spiral fin params
-  finCount: number; // 4-60
-  finHeight: number; // mm, 2-30
-  finWidth: number; // degrees, 1-20
+  finCount: number; // 30-80
+  finHeight: number; // mm, 1-6
+  finWidth: number; // broadness factor, 0.5-4.0 (higher = wider peaks)
 }
 
 export interface LampParams {
@@ -73,7 +73,7 @@ export const DEFAULT_VASE_PARAMS: VaseParams = {
   baseThickness: 2,
   resolution: 128,
 
-  style: 'classic',
+  style: 'spiral-fin',
 
   profileCurve: 0.0,
 
@@ -96,9 +96,9 @@ export const DEFAULT_VASE_PARAMS: VaseParams = {
   gearTeeth: 12,
   petalCount: 5,
 
-  finCount: 24,
-  finHeight: 8,
-  finWidth: 3,
+  finCount: 55,
+  finHeight: 3.5,
+  finWidth: 2.2,
 } as const;
 
 export const DEFAULT_LAMP_PARAMS: LampParams = {

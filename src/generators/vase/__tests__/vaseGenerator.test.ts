@@ -236,6 +236,7 @@ describe('generateVase', () => {
     it('smooth vs ridged inner wall produce different polygon counts', () => {
       const base: VaseParams = {
         ...LOW_RES_PARAMS,
+        style: 'classic',
         ridgeCount: 8,
         ridgeDepth: 5,
       };

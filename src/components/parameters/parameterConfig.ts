@@ -16,6 +16,8 @@ export interface SliderConfig extends BaseParamConfig {
   max: number;
   step: number;
   unit?: string;
+  /** Compute a dynamic max from current params (overrides static max) */
+  dynamicMax?: (params: VaseParams) => number;
 }
 
 export interface SelectConfig extends BaseParamConfig {
@@ -189,27 +191,26 @@ export const FIN_PARAMS: ParamConfig[] = [
     key: 'finCount',
     label: 'Fin Count',
     type: 'slider',
-    min: 4,
-    max: 60,
+    min: 30,
+    max: 80,
     step: 1,
   },
   {
     key: 'finHeight',
     label: 'Fin Height',
     type: 'slider',
-    min: 2,
-    max: 30,
+    min: 1,
+    max: 6,
     step: 0.5,
     unit: 'mm',
   },
   {
     key: 'finWidth',
-    label: 'Fin Width',
+    label: 'Fin Broadness',
     type: 'slider',
-    min: 1,
-    max: 20,
-    step: 0.5,
-    unit: '\u00B0',
+    min: 0.5,
+    max: 4,
+    step: 0.1,
   },
 ];
 

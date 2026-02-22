@@ -40,5 +40,6 @@ npm-debug.log*
 # Worktrees
 .worktrees/
 
-# Project — CLAUDE.md is local-only, never pushed to remotes
+# Project — CLAUDE.md and .claude/ are local-only, never pushed to remotes
 CLAUDE.md
+.claude/

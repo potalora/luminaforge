@@ -11,6 +11,8 @@ interface ParamSliderProps {
   max: number;
   step: number;
   unit?: string;
+  /** Dynamic max override (computed from current params) */
+  maxOverride?: number;
 }
 
 /** Slider with label, numeric value display, and click-to-edit */
@@ -18,10 +20,12 @@ export const ParamSlider = React.memo(function ParamSlider({
   paramKey,
   label,
   min,
-  max,
+  max: staticMax,
   step,
   unit = '',
+  maxOverride,
 }: ParamSliderProps) {
+  const max = maxOverride ?? staticMax;
   const value = useDesignStore((s) => s.params[paramKey]) as number;
   const setParam = useDesignStore((s) => s.setParam);
 

@@ -28,6 +28,7 @@ export const ModelRenderer = React.memo(function ModelRenderer({
       new THREE.BufferAttribute(geometry.normals, 3)
     );
     geom.setIndex(new THREE.BufferAttribute(geometry.indices, 1));
+    geom.computeVertexNormals();
     return geom;
   }, [geometry]);
 
@@ -52,10 +53,9 @@ export const ModelRenderer = React.memo(function ModelRenderer({
   return (
     <mesh ref={meshRef} geometry={bufferGeometry} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
       <meshStandardMaterial
-        color="#D4C4A8"
-        roughness={0.7}
-        metalness={0.05}
-        flatShading
+        color="#C4784A"
+        roughness={0.65}
+        metalness={0.03}
       />
     </mesh>
   );

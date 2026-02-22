@@ -9,14 +9,14 @@ export const SceneLighting = React.memo(function SceneLighting() {
       {/* Warm key light — upper right front */}
       <directionalLight
         position={[150, 200, 100]}
-        intensity={1.2}
+        intensity={1.5}
         color="#FFF0DD"
         castShadow
       />
       {/* Cool fill light — left side */}
       <directionalLight
         position={[-120, 80, -60]}
-        intensity={0.4}
+        intensity={0.25}
         color="#C8D8E8"
       />
       {/* Subtle rim light — behind */}
@@ -26,7 +26,7 @@ export const SceneLighting = React.memo(function SceneLighting() {
         color="#E0D8D0"
       />
       {/* Low ambient so shadows aren't pitch black */}
-      <ambientLight intensity={0.15} color="#F0EDE8" />
+      <ambientLight intensity={0.1} color="#F0EDE8" />
     </>
   );
 });

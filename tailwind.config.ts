@@ -31,9 +31,9 @@ const config: Config = {
         error: 'var(--error)',
       },
       fontFamily: {
-        display: ['var(--font-instrument-serif)', 'serif'],
-        sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-jetbrains-mono)', 'monospace'],
+        display: ['var(--font-cormorant)', 'serif'],
+        sans: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-ibm-plex-mono)', 'monospace'],
       },
       borderRadius: {
         sm: '6px',

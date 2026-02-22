@@ -25,7 +25,7 @@ export const ParamSection = React.memo(function ParamSection({
         data-testid={`section-${title.toLowerCase()}`}
         aria-expanded={isOpen}
       >
-        <span className="text-xs font-display italic text-text-secondary tracking-widest uppercase">
+        <span className="text-[10px] font-sans font-light text-text-secondary tracking-[0.2em] uppercase">
           {title}
         </span>
         <ChevronDown

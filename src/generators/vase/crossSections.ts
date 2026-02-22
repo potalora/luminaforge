@@ -96,6 +96,34 @@ export function applyRidgeModulation(
   });
 }
 
+/** Apply continuous sinusoidal fin modulation to a set of cross-section points */
+export function applyFinModulation(
+  points: [number, number][],
+  finCount: number,
+  finHeight: number,
+  finBroadness: number
+): [number, number][] {
+  if (finCount <= 0 || finHeight <= 0) return points;
+
+  const exponent = 1 / Math.max(0.1, finBroadness);
+
+  return points.map(([x, y]) => {
+    const angle = Math.atan2(y, x);
+    const r = Math.sqrt(x * x + y * y);
+
+    // Continuous cosine wave: 0 at valleys, 1 at peaks
+    const wave = (Math.cos(angle * finCount) + 1) / 2;
+    // Broadness exponent: <1 = wide peaks, >1 = narrow peaks
+    const shaped = Math.pow(wave, exponent);
+
+    const modulatedR = r + finHeight * shaped;
+    return [Math.cos(angle) * modulatedR, Math.sin(angle) * modulatedR] as [
+      number,
+      number,
+    ];
+  });
+}
+
 // --- Shape sub-param interfaces for getBaseRadiusAtAngle ---
 
 export interface ShapeSubParams {
@@ -390,10 +418,11 @@ export function createCrossSection(
 /**
  * Create a cross-section with spiral fins projecting from the body shape.
  *
- * Algorithm — smart point placement:
- * For N fins around the circumference, each fin has 5 control points
- * (leading shoulder, ramp up, peak, ramp down, trailing shoulder)
- * plus arcPointsPerGap smooth body points between fins.
+ * Algorithm — smooth cosine-curve fins:
+ * For N fins around the circumference, each fin is sampled with `finPointCount`
+ * points along a sin²(π·t) profile (raised cosine) producing smooth, rounded
+ * blades that bulge outward. Between fins, `arcPointsPerGap` body points fill
+ * the gap along the underlying cross-section shape.
  */
 export function createFinCrossSection(
   baseRadius: number,
@@ -404,39 +433,28 @@ export function createFinCrossSection(
   subParams: ShapeSubParams = {},
   arcPointsPerGap: number = 4
 ): [number, number][] {
-  // Clamp fin width so fins don't overlap: max 90% of the gap between fins
-  const maxWidthDeg = (360 / finCount) * 0.9;
+  // Clamp fin width so fins don't overlap: max 95% of the gap between fins
+  const maxWidthDeg = (360 / finCount) * 0.95;
   const clampedWidthDeg = Math.min(finWidthDeg, maxWidthDeg);
   const halfWidth = ((clampedWidthDeg / 2) * Math.PI) / 180;
 
   const points: [number, number][] = [];
   const finSpacing = (2 * Math.PI) / finCount;
+  const finPointCount = 9;
 
   for (let i = 0; i < finCount; i++) {
     const centerAngle = i * finSpacing;
 
-    // Body radius at the fin center
-    const bodyR = getBaseRadiusAtAngle(centerAngle, crossSection, baseRadius, subParams);
+    // Sample fin profile with raised-cosine curve: sin²(π·t)
+    for (let j = 0; j < finPointCount; j++) {
+      const t = j / (finPointCount - 1); // 0 to 1 across fin width
+      const a = centerAngle - halfWidth + t * 2 * halfWidth;
 
-    // 5 fin points: shoulder → ramp → peak → ramp → shoulder
-    const finAngles = [
-      centerAngle - halfWidth,          // leading shoulder
-      centerAngle - halfWidth * 0.1,    // ramp up
-      centerAngle,                      // peak
-      centerAngle + halfWidth * 0.1,    // ramp down
-      centerAngle + halfWidth,          // trailing shoulder
-    ];
-    const finRadii = [
-      getBaseRadiusAtAngle(finAngles[0], crossSection, baseRadius, subParams),  // body surface
-      getBaseRadiusAtAngle(finAngles[1], crossSection, baseRadius, subParams) + finHeight * 0.2,  // 20% ramp
-      bodyR + finHeight,                // full peak
-      getBaseRadiusAtAngle(finAngles[3], crossSection, baseRadius, subParams) + finHeight * 0.2,  // 20% ramp
-      getBaseRadiusAtAngle(finAngles[4], crossSection, baseRadius, subParams),  // body surface
-    ];
+      // sin²(π·t): smooth bell curve, 0 at edges, 1 at center
+      const profile = Math.sin(Math.PI * t) ** 2;
 
-    for (let j = 0; j < 5; j++) {
-      const a = finAngles[j];
-      const r = finRadii[j];
+      const bodyR = getBaseRadiusAtAngle(a, crossSection, baseRadius, subParams);
+      const r = bodyR + finHeight * profile;
       points.push([Math.cos(a) * r, Math.sin(a) * r]);
     }
 

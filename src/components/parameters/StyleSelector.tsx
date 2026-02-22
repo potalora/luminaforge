@@ -32,7 +32,7 @@ export const StyleSelector = React.memo(function StyleSelector() {
             aria-checked={style === value}
             onClick={() => setParam('style', value)}
             data-testid={`style-${value}`}
-            className={`flex-1 text-xs font-sans py-2 transition-colors ${
+            className={`flex-1 text-[11px] font-sans tracking-wider py-2 transition-colors ${
               style === value
                 ? 'bg-accent-primary/15 text-accent-primary'
                 : 'text-text-secondary hover:text-text-primary'
