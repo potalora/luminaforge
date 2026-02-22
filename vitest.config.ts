@@ -13,6 +13,13 @@ export default defineConfig({
       ['src/hooks/**', 'jsdom'],
     ],
     setupFiles: ['./src/test/setup.ts'],
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: 8,
+        minThreads: 4,
+      },
+    },
   },
   resolve: {
     alias: {

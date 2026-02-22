@@ -39,30 +39,88 @@ function getShapeSubParams(params: VaseParams): ShapeSubParams {
 }
 
 /**
- * Shrink each 2D point radially inward by `inset`, clamped so no point's
- * radius drops below `minRadius`. Prevents wall collapse on concave shapes
- * where the local radius can be smaller than wallThickness.
+ * Offset a closed polygon inward along vertex normals by `offset` distance.
+ * Uses averaged edge normals (miter) at each vertex, with miter distance
+ * capped to prevent spikes at sharp corners. Points are clamped to
+ * `minRadius` from the origin to prevent wall collapse.
+ *
+ * Assumes counter-clockwise winding (which all cross-section generators produce).
  */
-function applyWallInset(
+export function offsetPolygonInward(
   points: [number, number][],
-  inset: number,
+  offset: number,
   minRadius: number
 ): [number, number][] {
-  return points.map(([x, y]) => {
-    const r = Math.sqrt(x * x + y * y);
-    if (r < 1e-6) return [x, y] as [number, number];
-    const innerR = Math.max(r - inset, minRadius);
-    const scale = innerR / r;
-    return [x * scale, y * scale] as [number, number];
-  });
+  const n = points.length;
+  const result: [number, number][] = [];
+
+  for (let i = 0; i < n; i++) {
+    const prev = points[(i - 1 + n) % n];
+    const curr = points[i];
+    const next = points[(i + 1) % n];
+
+    // Edge vectors
+    const dx1 = curr[0] - prev[0];
+    const dy1 = curr[1] - prev[1];
+    const dx2 = next[0] - curr[0];
+    const dy2 = next[1] - curr[1];
+    const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+    const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+    if (len1 < 1e-10 || len2 < 1e-10) {
+      result.push(curr);
+      continue;
+    }
+
+    // Inward normals for CCW polygon: rotate edge 90° CCW → (-dy, dx)
+    const n1x = -dy1 / len1;
+    const n1y = dx1 / len1;
+    const n2x = -dy2 / len2;
+    const n2y = dx2 / len2;
+
+    // Average normal direction
+    let nx = n1x + n2x;
+    let ny = n1y + n2y;
+    const nlen = Math.sqrt(nx * nx + ny * ny);
+
+    if (nlen < 1e-10) {
+      // Edges are parallel — use either normal
+      nx = n1x;
+      ny = n1y;
+    } else {
+      nx /= nlen;
+      ny /= nlen;
+    }
+
+    // Miter distance: offset / cos(half-angle between edges)
+    // Capped to 2× offset to prevent spikes at sharp corners
+    const cosHalf = n1x * nx + n1y * ny;
+    const miterOffset = cosHalf > 0.25 ? offset / cosHalf : offset * 2;
+
+    let newX = curr[0] + nx * miterOffset;
+    let newY = curr[1] + ny * miterOffset;
+
+    // Clamp minimum radius to prevent collapse
+    const r = Math.sqrt(newX * newX + newY * newY);
+    if (r < minRadius) {
+      const scale = minRadius / r;
+      newX *= scale;
+      newY *= scale;
+    }
+
+    result.push([newX, newY]);
+  }
+
+  return result;
 }
 
 /**
  * Build a shell (outer or inner) as a solid of revolution with
  * profile curves, twist, and ridge/fin modulation applied per-layer.
  *
- * @param wallInset — when > 0, each point is offset radially inward by this
- *   amount (clamped to a floor) after shape generation. Used for inner shell.
+ * @param wallInset — when > 0, each point is offset inward along the local
+ *   surface normal by this amount (with slope compensation and miter capping).
+ *   Used for inner shell to achieve uniform perpendicular wall thickness.
  */
 function buildShell(
   params: VaseParams,
@@ -136,7 +194,15 @@ function buildShell(
     }
 
     if (wallInset > 0) {
-      baseSlicePoints = applyWallInset(baseSlicePoints, wallInset, minRadius);
+      // Slope compensation at t=0: compute profile slope at bottom
+      const eps = 0.001;
+      const pLo = getProfileScale(params.profileCurve, 0, params.taper);
+      const pHi = getProfileScale(params.profileCurve, eps, params.taper);
+      const dProfileDt = (pHi - pLo) / eps;
+      const dR_dH = baseRadius * dProfileDt / params.height;
+      const slopeCompensation = Math.sqrt(1 + dR_dH * dR_dH);
+      const adjustedInset = wallInset * slopeCompensation;
+      baseSlicePoints = offsetPolygonInward(baseSlicePoints, adjustedInset, minRadius);
     }
   }
 
@@ -196,9 +262,16 @@ function buildShell(
           );
         }
 
-        // Apply per-point wall inset for inner shell (clamped to prevent collapse)
+        // Apply normal-based wall inset with slope compensation for inner shell
         if (wallInset > 0) {
-          layerPoints = applyWallInset(layerPoints, wallInset, minRadius);
+          const eps = 0.001;
+          const pLo = getProfileScale(params.profileCurve, Math.max(0, t - eps), params.taper);
+          const pHi = getProfileScale(params.profileCurve, Math.min(1, t + eps), params.taper);
+          const dProfileDt = (pHi - pLo) / (Math.min(1, t + eps) - Math.max(0, t - eps));
+          const dR_dH = baseRadius * dProfileDt / params.height;
+          const slopeCompensation = Math.sqrt(1 + dR_dH * dR_dH);
+          const adjustedInset = wallInset * slopeCompensation;
+          layerPoints = offsetPolygonInward(layerPoints, adjustedInset, minRadius);
         }
 
         // Apply twist rotation and translate to height
