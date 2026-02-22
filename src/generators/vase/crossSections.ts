@@ -4,7 +4,7 @@
  * that describe a cross-section at a given radius.
  */
 
-import type { CrossSection, RibProfile } from '@/types/design';
+import type { CrossSection, RidgeProfile } from '@/types/design';
 
 /** Create a circle cross-section as an array of 2D points */
 export function createCirclePoints(
@@ -49,41 +49,41 @@ export function createStarPoints(
   return result;
 }
 
-/** Apply sinusoidal rib modulation to a set of cross-section points */
-export function applyRibModulation(
+/** Apply sinusoidal ridge modulation to a set of cross-section points */
+export function applyRidgeModulation(
   points: [number, number][],
-  ribCount: number,
-  ribDepth: number,
-  ribProfile: RibProfile
+  ridgeCount: number,
+  ridgeDepth: number,
+  ridgeProfile: RidgeProfile
 ): [number, number][] {
-  if (ribCount <= 0 || ribDepth <= 0) return points;
+  if (ridgeCount <= 0 || ridgeDepth <= 0) return points;
 
   return points.map(([x, y]) => {
     const angle = Math.atan2(y, x);
     const r = Math.sqrt(x * x + y * y);
 
-    // Sinusoidal rib pattern
-    const ribAngle = angle * ribCount;
+    // Sinusoidal ridge pattern
+    const ridgeAngle = angle * ridgeCount;
     let modulation: number;
 
-    switch (ribProfile) {
+    switch (ridgeProfile) {
       case 'round':
         // Smooth sine wave
-        modulation = (Math.cos(ribAngle) + 1) / 2;
+        modulation = (Math.cos(ridgeAngle) + 1) / 2;
         break;
       case 'sharp':
-        // Triangle wave (sharper ribs)
-        modulation = Math.abs(((ribAngle / Math.PI) % 2) - 1);
+        // Triangle wave (sharper ridges)
+        modulation = Math.abs(((ridgeAngle / Math.PI) % 2) - 1);
         break;
       case 'flat':
         // Square-ish wave (smoothed step function)
-        modulation = (Math.tanh(Math.sin(ribAngle) * 3) + 1) / 2;
+        modulation = (Math.tanh(Math.sin(ridgeAngle) * 3) + 1) / 2;
         break;
       default:
-        modulation = (Math.cos(ribAngle) + 1) / 2;
+        modulation = (Math.cos(ridgeAngle) + 1) / 2;
     }
 
-    const modulatedR = r + ribDepth * modulation;
+    const modulatedR = r + ridgeDepth * modulation;
     return [Math.cos(angle) * modulatedR, Math.sin(angle) * modulatedR] as [
       number,
       number,

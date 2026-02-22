@@ -29,14 +29,24 @@ describe('ParameterPanel', () => {
     expect(screen.getByTestId('object-type-lamp')).toBeDisabled();
   });
 
-  it('renders all main parameters', () => {
+  it('renders profile shape picker', () => {
     render(<ParameterPanel />);
-    expect(screen.getByTestId('profileShape-select')).toBeInTheDocument();
+    expect(screen.getByTestId('profile-shape-picker')).toBeInTheDocument();
+  });
+
+  it('renders main shape parameters', () => {
+    render(<ParameterPanel />);
     expect(screen.getByTestId('height-slider')).toBeInTheDocument();
-    expect(screen.getByTestId('baseDiameter-slider')).toBeInTheDocument();
-    expect(screen.getByTestId('topDiameter-slider')).toBeInTheDocument();
+    expect(screen.getByTestId('diameter-slider')).toBeInTheDocument();
+    expect(screen.getByTestId('taper-slider')).toBeInTheDocument();
     expect(screen.getByTestId('twistAngle-slider')).toBeInTheDocument();
     expect(screen.getByTestId('crossSection-select')).toBeInTheDocument();
+  });
+
+  it('renders ridges section with ridge params', () => {
+    render(<ParameterPanel />);
+    expect(screen.getByTestId('ridgeCount-slider')).toBeInTheDocument();
+    expect(screen.getByTestId('ridgeDepth-slider')).toBeInTheDocument();
   });
 
   it('advanced section is collapsed by default', () => {
@@ -50,7 +60,7 @@ describe('ParameterPanel', () => {
     await user.click(screen.getByTestId('section-advanced'));
     expect(screen.getByTestId('wallThickness-slider')).toBeInTheDocument();
     expect(screen.getByTestId('resolution-slider')).toBeInTheDocument();
-    expect(screen.getByTestId('ribCount-slider')).toBeInTheDocument();
+    expect(screen.getByTestId('ridgeProfile-select')).toBeInTheDocument();
   });
 
   it('polygon sides hidden when crossSection is circle', async () => {

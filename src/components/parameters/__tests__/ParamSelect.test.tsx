@@ -3,49 +3,48 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ParamSelect } from '../ParamSelect';
 import { useDesignStore } from '@/store/designStore';
 
-const PROFILE_OPTIONS = [
-  { value: 'cylinder', label: 'Cylinder' },
-  { value: 'tapered', label: 'Tapered' },
-  { value: 'bulbous', label: 'Bulbous' },
-  { value: 'flared', label: 'Flared' },
+const CROSS_SECTION_OPTIONS = [
+  { value: 'circle', label: 'Circle' },
+  { value: 'polygon', label: 'Polygon' },
+  { value: 'star', label: 'Star' },
 ];
 
 describe('ParamSelect', () => {
   beforeEach(() => {
     useDesignStore.setState({
-      params: { ...useDesignStore.getState().params, profileShape: 'tapered' },
+      params: { ...useDesignStore.getState().params, crossSection: 'circle' },
     });
   });
 
   it('renders label', () => {
     render(
-      <ParamSelect paramKey="profileShape" label="Profile Shape" options={PROFILE_OPTIONS} />
+      <ParamSelect paramKey="crossSection" label="Cross Section" options={CROSS_SECTION_OPTIONS} />
     );
-    expect(screen.getByText('Profile Shape')).toBeInTheDocument();
+    expect(screen.getByText('Cross Section')).toBeInTheDocument();
   });
 
   it('renders all options', () => {
     render(
-      <ParamSelect paramKey="profileShape" label="Profile Shape" options={PROFILE_OPTIONS} />
+      <ParamSelect paramKey="crossSection" label="Cross Section" options={CROSS_SECTION_OPTIONS} />
     );
-    const select = screen.getByTestId('profileShape-select');
-    expect(select.querySelectorAll('option')).toHaveLength(4);
+    const select = screen.getByTestId('crossSection-select');
+    expect(select.querySelectorAll('option')).toHaveLength(3);
   });
 
   it('shows current value from store', () => {
     render(
-      <ParamSelect paramKey="profileShape" label="Profile Shape" options={PROFILE_OPTIONS} />
+      <ParamSelect paramKey="crossSection" label="Cross Section" options={CROSS_SECTION_OPTIONS} />
     );
-    expect(screen.getByTestId('profileShape-select')).toHaveValue('tapered');
+    expect(screen.getByTestId('crossSection-select')).toHaveValue('circle');
   });
 
   it('selection change updates store', () => {
     render(
-      <ParamSelect paramKey="profileShape" label="Profile Shape" options={PROFILE_OPTIONS} />
+      <ParamSelect paramKey="crossSection" label="Cross Section" options={CROSS_SECTION_OPTIONS} />
     );
-    fireEvent.change(screen.getByTestId('profileShape-select'), {
-      target: { value: 'bulbous' },
+    fireEvent.change(screen.getByTestId('crossSection-select'), {
+      target: { value: 'polygon' },
     });
-    expect(useDesignStore.getState().params.profileShape).toBe('bulbous');
+    expect(useDesignStore.getState().params.crossSection).toBe('polygon');
   });
 });

@@ -2,12 +2,14 @@
 
 import { useDesignStore } from '@/store/designStore';
 import { ObjectTypeToggle } from './ObjectTypeToggle';
+import { ProfileShapePicker } from './ProfileShapePicker';
 import { ParamSection } from './ParamSection';
 import { ParamSlider } from './ParamSlider';
 import { ParamSelect } from './ParamSelect';
 import { ParamToggle } from './ParamToggle';
 import {
-  MAIN_PARAMS,
+  SHAPE_PARAMS,
+  RIDGE_PARAMS,
   ADVANCED_PARAMS,
   type ParamConfig,
   type SliderConfig,
@@ -57,7 +59,7 @@ function renderParam(config: ParamConfig) {
   }
 }
 
-/** Full parameter panel: object type toggle + main params + advanced params */
+/** Full parameter panel: object type toggle + shape + ridges + advanced */
 export function ParameterPanel() {
   const params = useDesignStore((s) => s.params);
 
@@ -65,7 +67,7 @@ export function ParameterPanel() {
     configs.filter((c) => !c.condition || c.condition(params as VaseParams));
 
   return (
-    <div className="flex flex-col gap-2 p-5">
+    <div className="flex flex-col gap-2 p-5 sidebar-gradient">
       <h1 className="font-display text-xl text-text-primary tracking-tight mb-2">
         LuminaForge
       </h1>
@@ -74,7 +76,14 @@ export function ParameterPanel() {
 
       <div className="mt-4">
         <ParamSection title="Shape" defaultOpen>
-          {filterVisible(MAIN_PARAMS).map(renderParam)}
+          <ProfileShapePicker />
+          {filterVisible(SHAPE_PARAMS).map(renderParam)}
+        </ParamSection>
+      </div>
+
+      <div className="border-t border-bg-tertiary">
+        <ParamSection title="Ridges" defaultOpen>
+          {filterVisible(RIDGE_PARAMS).map(renderParam)}
         </ParamSection>
       </div>
 

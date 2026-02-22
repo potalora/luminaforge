@@ -3,7 +3,7 @@ import {
   createCirclePoints,
   createPolygonPoints,
   createStarPoints,
-  applyRibModulation,
+  applyRidgeModulation,
   createCrossSection,
 } from '../crossSections';
 
@@ -146,37 +146,37 @@ describe('createStarPoints', () => {
   });
 });
 
-describe('applyRibModulation', () => {
+describe('applyRidgeModulation', () => {
   const circlePoints = createCirclePoints(10, 64);
 
-  it('returns unchanged points when ribCount=0', () => {
-    const result = applyRibModulation(circlePoints, 0, 5, 'round');
+  it('returns unchanged points when ridgeCount=0', () => {
+    const result = applyRidgeModulation(circlePoints, 0, 5, 'round');
     expect(result).toBe(circlePoints); // same reference
   });
 
-  it('returns unchanged points when ribDepth=0', () => {
-    const result = applyRibModulation(circlePoints, 6, 0, 'round');
+  it('returns unchanged points when ridgeDepth=0', () => {
+    const result = applyRidgeModulation(circlePoints, 6, 0, 'round');
     expect(result).toBe(circlePoints); // same reference
   });
 
   it('round profile: modulated radii vary smoothly', () => {
-    const ribDepth = 5;
-    const result = applyRibModulation(circlePoints, 6, ribDepth, 'round');
+    const ridgeDepth = 5;
+    const result = applyRidgeModulation(circlePoints, 6, ridgeDepth, 'round');
     const radii = result.map(distFromOrigin);
-    // All radii should be between original radius and radius + ribDepth
+    // All radii should be between original radius and radius + ridgeDepth
     for (const r of radii) {
       expect(r).toBeGreaterThanOrEqual(10 - 0.001);
-      expect(r).toBeLessThanOrEqual(10 + ribDepth + 0.001);
+      expect(r).toBeLessThanOrEqual(10 + ridgeDepth + 0.001);
     }
   });
 
-  it('round profile: creates ribCount peaks around the circle', () => {
-    const ribCount = 6;
-    const ribDepth = 5;
-    const result = applyRibModulation(
+  it('round profile: creates ridgeCount peaks around the circle', () => {
+    const ridgeCount = 6;
+    const ridgeDepth = 5;
+    const result = applyRidgeModulation(
       createCirclePoints(10, 360),
-      ribCount,
-      ribDepth,
+      ridgeCount,
+      ridgeDepth,
       'round'
     );
     const radii = result.map(distFromOrigin);
@@ -187,12 +187,12 @@ describe('applyRibModulation', () => {
       const next = radii[(i + 1) % radii.length];
       if (radii[i] > prev && radii[i] > next) peaks++;
     }
-    expect(peaks).toBe(ribCount);
+    expect(peaks).toBe(ridgeCount);
   });
 
   it('sharp profile: modulated radii have a triangular wave pattern', () => {
-    const ribDepth = 5;
-    const result = applyRibModulation(circlePoints, 6, ribDepth, 'sharp');
+    const ridgeDepth = 5;
+    const result = applyRidgeModulation(circlePoints, 6, ridgeDepth, 'sharp');
     const radii = result.map(distFromOrigin);
     // Should have variation — not all the same
     const min = Math.min(...radii);
@@ -201,8 +201,8 @@ describe('applyRibModulation', () => {
   });
 
   it('flat profile: modulated radii have smoothed step pattern', () => {
-    const ribDepth = 5;
-    const result = applyRibModulation(circlePoints, 6, ribDepth, 'flat');
+    const ridgeDepth = 5;
+    const result = applyRidgeModulation(circlePoints, 6, ridgeDepth, 'flat');
     const radii = result.map(distFromOrigin);
     const min = Math.min(...radii);
     const max = Math.max(...radii);
@@ -212,7 +212,7 @@ describe('applyRibModulation', () => {
   it('all profiles produce finite coordinates', () => {
     const profiles = ['round', 'sharp', 'flat'] as const;
     for (const profile of profiles) {
-      const result = applyRibModulation(circlePoints, 6, 5, profile);
+      const result = applyRidgeModulation(circlePoints, 6, 5, profile);
       for (const [x, y] of result) {
         expect(Number.isFinite(x)).toBe(true);
         expect(Number.isFinite(y)).toBe(true);

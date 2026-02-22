@@ -10,15 +10,15 @@ export type ProfileShape =
 
 export type CrossSection = 'circle' | 'polygon' | 'star';
 
-export type RibProfile = 'round' | 'sharp' | 'flat';
+export type RidgeProfile = 'round' | 'sharp' | 'flat';
 
 export type TwistEasing = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
 
 export interface VaseParams {
   // Base dimensions
   height: number; // mm, 50-400
-  baseDiameter: number; // mm, 30-200
-  topDiameter: number; // mm, 30-250
+  diameter: number; // mm, 40-200 (base width)
+  taper: number; // 0.3-1.7 (ratio: top width / base width)
   wallThickness: number; // mm, 0.8-4
   baseThickness: number; // mm, 1-6
   resolution: number; // segments, 32-256
@@ -29,9 +29,9 @@ export interface VaseParams {
   // Twist
   twistAngle: number; // degrees, 0-720
   twistDirection: 'cw' | 'ccw';
-  ribCount: number; // 0-24
-  ribDepth: number; // mm, 0-20
-  ribProfile: RibProfile;
+  ridgeCount: number; // 0-32
+  ridgeDepth: number; // mm, 0-20
+  ridgeProfile: RidgeProfile;
   twistEasing: TwistEasing;
 
   // Cross-section
@@ -54,19 +54,19 @@ export type DesignParams =
 
 export const DEFAULT_VASE_PARAMS: VaseParams = {
   height: 150,
-  baseDiameter: 80,
-  topDiameter: 100,
+  diameter: 80,
+  taper: 1.0,
   wallThickness: 1.6,
   baseThickness: 2,
-  resolution: 64,
+  resolution: 128,
 
   profileShape: 'tapered',
 
   twistAngle: 180,
   twistDirection: 'ccw',
-  ribCount: 6,
-  ribDepth: 3,
-  ribProfile: 'round',
+  ridgeCount: 20,
+  ridgeDepth: 5,
+  ridgeProfile: 'round',
   twistEasing: 'linear',
 
   crossSection: 'circle',
@@ -79,5 +79,5 @@ export const DEFAULT_LAMP_PARAMS: LampParams = {
   height: 200,
   diameter: 150,
   wallThickness: 2,
-  resolution: 64,
+  resolution: 128,
 } as const;

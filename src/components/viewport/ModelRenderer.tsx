@@ -50,7 +50,7 @@ export const ModelRenderer = React.memo(function ModelRenderer({
   if (!bufferGeometry) return null;
 
   return (
-    <mesh ref={meshRef} geometry={bufferGeometry} castShadow receiveShadow>
+    <mesh ref={meshRef} geometry={bufferGeometry} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
       <meshStandardMaterial
         color="#D4C4A8"
         roughness={0.7}

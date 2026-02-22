@@ -6,26 +6,25 @@
  * 1. Build outer shell using extrudeFromSlices with per-layer:
  *    - Profile-scaled radius
  *    - Twist rotation (with easing)
- *    - Rib modulation
+ *    - Ridge modulation
  * 2. Build inner shell (same shape, radius reduced by wallThickness)
  * 3. Subtract inner from outer to create hollow vase
- * 4. Add solid base disc
  */
 
-import { primitives, booleans, transforms, extrusions, geometries } from '@jscad/modeling';
+import { booleans, transforms, extrusions } from '@jscad/modeling';
 import type { Geom3 } from '@jscad/modeling';
 import type { VaseParams } from '@/types/design';
-import { createCrossSection, applyRibModulation } from './crossSections';
+import { createCrossSection, applyRidgeModulation } from './crossSections';
 import { getProfileScale, getTwistProgress } from './profiles';
 
 const { extrudeFromSlices, slice } = extrusions;
 
 /**
  * Build a shell (outer or inner) as a solid of revolution with
- * profile curves, twist, and rib modulation applied per-layer.
+ * profile curves, twist, and ridge modulation applied per-layer.
  */
 function buildShell(params: VaseParams, radiusOffset: number): Geom3 {
-  const baseRadius = params.baseDiameter / 2 + radiusOffset;
+  const baseRadius = params.diameter / 2 + radiusOffset;
   const sliceCount = Math.max(
     Math.ceil(params.height / 2),
     Math.ceil(Math.abs(params.twistAngle) / 10),
@@ -54,14 +53,14 @@ function buildShell(params: VaseParams, radiusOffset: number): Geom3 {
   const scaledBasePoints = basePoints.map(
     ([x, y]) => [x * baseRadius, y * baseRadius] as [number, number]
   );
-  const ribModulatedBase = applyRibModulation(
+  const ridgeModulatedBase = applyRidgeModulation(
     scaledBasePoints,
-    params.ribCount,
-    params.ribDepth + radiusOffset, // scale rib depth with wall offset
-    params.ribProfile
+    params.ridgeCount,
+    params.ridgeDepth + radiusOffset, // scale ridge depth with wall offset
+    params.ridgeProfile
   );
   const baseSlice = slice.fromPoints(
-    ribModulatedBase.map(([x, y]) => [x, y, 0])
+    ridgeModulatedBase.map(([x, y]) => [x, y, 0])
   );
 
   const twistAngleRad =
@@ -81,8 +80,7 @@ function buildShell(params: VaseParams, radiusOffset: number): Geom3 {
         const profileScale = getProfileScale(
           params.profileShape,
           t,
-          params.baseDiameter,
-          params.topDiameter
+          params.taper
         );
         const layerRadius = baseRadius * profileScale;
 
@@ -95,13 +93,13 @@ function buildShell(params: VaseParams, radiusOffset: number): Geom3 {
           ([x, y]) => [x * layerRadius, y * layerRadius] as [number, number]
         );
 
-        // Apply rib modulation
-        const ribDepthAtLayer = (params.ribDepth + radiusOffset) * profileScale;
-        const modulatedPoints = applyRibModulation(
+        // Apply ridge modulation
+        const ridgeDepthAtLayer = (params.ridgeDepth + radiusOffset) * profileScale;
+        const modulatedPoints = applyRidgeModulation(
           layerPoints,
-          params.ribCount,
-          ribDepthAtLayer > 0 ? ribDepthAtLayer : 0,
-          params.ribProfile
+          params.ridgeCount,
+          ridgeDepthAtLayer > 0 ? ridgeDepthAtLayer : 0,
+          params.ridgeProfile
         );
 
         // Apply twist rotation and translate to height
@@ -119,44 +117,6 @@ function buildShell(params: VaseParams, radiusOffset: number): Geom3 {
       },
     },
     baseSlice
-  );
-}
-
-/** Create a solid disc for the vase base */
-function createBase(params: VaseParams): Geom3 {
-  const baseRadius = params.baseDiameter / 2;
-
-  // Cross-section points at base radius with rib modulation
-  const crossSectionSegments =
-    params.crossSection === 'circle'
-      ? Math.max(params.resolution, 32)
-      : params.crossSection === 'polygon'
-        ? params.polygonSides
-        : params.starPoints * 2;
-
-  const basePoints = createCrossSection(
-    params.crossSection,
-    baseRadius,
-    crossSectionSegments,
-    params.polygonSides,
-    params.starPoints,
-    params.starInnerRatio
-  );
-
-  const modulatedPoints = applyRibModulation(
-    basePoints,
-    params.ribCount,
-    params.ribDepth,
-    params.ribProfile
-  );
-
-  // Create a 2D polygon from the base cross-section
-  const baseShape = geometries.geom2.fromPoints(modulatedPoints);
-
-  // Extrude to baseThickness
-  return extrusions.extrudeLinear(
-    { height: params.baseThickness },
-    baseShape
   );
 }
 

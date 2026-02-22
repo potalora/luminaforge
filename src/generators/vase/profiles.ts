@@ -1,80 +1,81 @@
 /**
  * Profile curves: map normalized height t ∈ [0,1] to a scale factor.
- * Used to vary the vase radius along its height.
+ * Each profile has a baked-in characteristic curve multiplied by a linear taper.
+ *
+ * radius(t) = (diameter/2) * profileCurve(t) * (1 + (taper - 1) * t)
  *
  * Twist easing: map normalized height t ∈ [0,1] to a twist progress factor.
  */
 
 import type { ProfileShape, TwistEasing } from '@/types/design';
 
-// --- Profile curves ---
+// --- Profile characteristic curves ---
 
-/** Constant radius */
+/** Constant — pure taper control */
 function profileCylinder(_t: number): number {
-  return 1;
+  return 1.0;
 }
 
-/** Linear interpolation between base and top scale */
-function profileTapered(t: number, topRatio: number): number {
-  return 1 + (topRatio - 1) * t;
+/** Slight natural narrowing */
+function profileTapered(t: number): number {
+  return 1.0 - 0.08 * t;
 }
 
-/** Sine curve bulge at mid-height */
-function profileBulbous(t: number, topRatio: number): number {
-  const base = 1 + (topRatio - 1) * t;
-  const bulge = Math.sin(t * Math.PI) * 0.3;
-  return base + bulge;
+/** Always has belly at mid-height */
+function profileBulbous(t: number): number {
+  return 1.0 + 0.3 * Math.sin(Math.PI * t);
 }
 
-/** Square root curve — rapid opening at top */
-function profileFlared(t: number, topRatio: number): number {
-  const flare = Math.sqrt(t);
-  return 1 + (topRatio - 1) * flare;
+/** Always opens at top */
+function profileFlared(t: number): number {
+  return 1.0 + 0.25 * (Math.sqrt(t) - t);
 }
 
-/** Pinch at middle (min at t=0.5) */
-function profileHourglass(t: number, topRatio: number): number {
-  const base = 1 + (topRatio - 1) * t;
-  const pinch = Math.cos(t * Math.PI) * 0.25;
-  return base - pinch + 0.25;
+/** Actually pinches at middle */
+function profileHourglass(t: number): number {
+  return 1.0 - 0.25 * Math.sin(Math.PI * t);
 }
 
-/** S-curve (sigmoid) — slow start, rapid middle, slow end */
-function profileScurve(t: number, topRatio: number): number {
-  // Sigmoid mapped to [0,1]
-  const k = 8; // steepness
-  const sigmoid = 1 / (1 + Math.exp(-k * (t - 0.5)));
-  return 1 + (topRatio - 1) * sigmoid;
+/** Gentle double wave */
+function profileScurve(t: number): number {
+  return 1.0 + 0.15 * Math.sin(2 * Math.PI * t);
 }
 
 /**
  * Get the profile scale factor at normalized height t.
- * Returns a multiplier for the base radius.
+ * Returns: profileCurve(t) * (1 + (taper - 1) * t)
  */
 export function getProfileScale(
   shape: ProfileShape,
   t: number,
-  baseDiameter: number,
-  topDiameter: number
+  taper: number
 ): number {
-  const topRatio = topDiameter / baseDiameter;
+  let curve: number;
 
   switch (shape) {
     case 'cylinder':
-      return profileCylinder(t);
+      curve = profileCylinder(t);
+      break;
     case 'tapered':
-      return profileTapered(t, topRatio);
+      curve = profileTapered(t);
+      break;
     case 'bulbous':
-      return profileBulbous(t, topRatio);
+      curve = profileBulbous(t);
+      break;
     case 'flared':
-      return profileFlared(t, topRatio);
+      curve = profileFlared(t);
+      break;
     case 'hourglass':
-      return profileHourglass(t, topRatio);
+      curve = profileHourglass(t);
+      break;
     case 'scurve':
-      return profileScurve(t, topRatio);
+      curve = profileScurve(t);
+      break;
     default:
-      return profileTapered(t, topRatio);
+      curve = profileTapered(t);
   }
+
+  return curve * (1 + (taper - 1) * t);
 }
 
 // --- Twist easing functions ---

@@ -9,7 +9,7 @@ interface ParamSectionProps {
   children: React.ReactNode;
 }
 
-/** Collapsible section wrapper with chevron toggle */
+/** Collapsible section wrapper with chevron toggle and accent bar */
 export const ParamSection = React.memo(function ParamSection({
   title,
   defaultOpen = true,
@@ -25,7 +25,7 @@ export const ParamSection = React.memo(function ParamSection({
         data-testid={`section-${title.toLowerCase()}`}
         aria-expanded={isOpen}
       >
-        <span className="text-xs font-sans text-text-tertiary tracking-widest uppercase">
+        <span className="text-xs font-display italic text-text-secondary tracking-widest uppercase">
           {title}
         </span>
         <ChevronDown
@@ -36,7 +36,10 @@ export const ParamSection = React.memo(function ParamSection({
         />
       </button>
       {isOpen && (
-        <div className="flex flex-col gap-4 pb-4" data-testid={`section-${title.toLowerCase()}-content`}>
+        <div
+          className="flex flex-col gap-4 pb-4 pl-3 border-l-2 border-[var(--accent-primary)]/20"
+          data-testid={`section-${title.toLowerCase()}-content`}
+        >
           {children}
         </div>
       )}

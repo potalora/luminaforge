@@ -30,21 +30,8 @@ export interface ToggleConfig extends BaseParamConfig {
 
 export type ParamConfig = SliderConfig | SelectConfig | ToggleConfig;
 
-/** Main parameters — always visible, ordered by visual impact */
-export const MAIN_PARAMS: ParamConfig[] = [
-  {
-    key: 'profileShape',
-    label: 'Profile Shape',
-    type: 'select',
-    options: [
-      { value: 'cylinder', label: 'Cylinder' },
-      { value: 'tapered', label: 'Tapered' },
-      { value: 'bulbous', label: 'Bulbous' },
-      { value: 'flared', label: 'Flared' },
-      { value: 'hourglass', label: 'Hourglass' },
-      { value: 'scurve', label: 'S-Curve' },
-    ],
-  },
+/** Shape parameters — profile picker is separate, these are sliders/selects */
+export const SHAPE_PARAMS: ParamConfig[] = [
   {
     key: 'height',
     label: 'Height',
@@ -55,22 +42,21 @@ export const MAIN_PARAMS: ParamConfig[] = [
     unit: 'mm',
   },
   {
-    key: 'baseDiameter',
-    label: 'Base Diameter',
+    key: 'diameter',
+    label: 'Diameter',
     type: 'slider',
-    min: 30,
+    min: 40,
     max: 200,
     step: 1,
     unit: 'mm',
   },
   {
-    key: 'topDiameter',
-    label: 'Top Diameter',
+    key: 'taper',
+    label: 'Taper',
     type: 'slider',
-    min: 30,
-    max: 250,
-    step: 1,
-    unit: 'mm',
+    min: 0.3,
+    max: 1.7,
+    step: 0.01,
   },
   {
     key: 'twistAngle',
@@ -90,6 +76,27 @@ export const MAIN_PARAMS: ParamConfig[] = [
       { value: 'polygon', label: 'Polygon' },
       { value: 'star', label: 'Star' },
     ],
+  },
+];
+
+/** Ridge parameters — promoted to their own section */
+export const RIDGE_PARAMS: ParamConfig[] = [
+  {
+    key: 'ridgeCount',
+    label: 'Ridge Count',
+    type: 'slider',
+    min: 0,
+    max: 32,
+    step: 1,
+  },
+  {
+    key: 'ridgeDepth',
+    label: 'Ridge Depth',
+    type: 'slider',
+    min: 0,
+    max: 20,
+    step: 0.5,
+    unit: 'mm',
   },
 ];
 
@@ -143,25 +150,8 @@ export const ADVANCED_PARAMS: ParamConfig[] = [
     ],
   },
   {
-    key: 'ribCount',
-    label: 'Rib Count',
-    type: 'slider',
-    min: 0,
-    max: 24,
-    step: 1,
-  },
-  {
-    key: 'ribDepth',
-    label: 'Rib Depth',
-    type: 'slider',
-    min: 0,
-    max: 20,
-    step: 0.5,
-    unit: 'mm',
-  },
-  {
-    key: 'ribProfile',
-    label: 'Rib Profile',
+    key: 'ridgeProfile',
+    label: 'Ridge Profile',
     type: 'select',
     options: [
       { value: 'round', label: 'Round' },

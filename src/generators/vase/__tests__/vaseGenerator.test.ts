@@ -54,11 +54,11 @@ describe('generateVase', () => {
   });
 
   describe('parameter variations', () => {
-    it('cylinder profile (no tapering)', () => {
+    it('cylinder profile with taper=1.0 (no tapering)', () => {
       const params: VaseParams = {
         ...LOW_RES_PARAMS,
         profileShape: 'cylinder',
-        topDiameter: 80, // same as base
+        taper: 1.0,
       };
       const result = generateVase(params);
       expect(getPolygons(result).length).toBeGreaterThan(0);
@@ -75,11 +75,11 @@ describe('generateVase', () => {
       expect(allVerticesFinite(result)).toBe(true);
     });
 
-    it('zero rib count', () => {
+    it('zero ridge count', () => {
       const params: VaseParams = {
         ...LOW_RES_PARAMS,
-        ribCount: 0,
-        ribDepth: 0,
+        ridgeCount: 0,
+        ridgeDepth: 0,
       };
       const result = generateVase(params);
       expect(getPolygons(result).length).toBeGreaterThan(0);
@@ -119,12 +119,32 @@ describe('generateVase', () => {
       expect(allVerticesFinite(result)).toBe(true);
     });
 
-    it('minimum dimensions (height=50, baseDiameter=30)', () => {
+    it('minimum dimensions (height=50, diameter=40)', () => {
       const params: VaseParams = {
         ...LOW_RES_PARAMS,
         height: 50,
-        baseDiameter: 30,
-        topDiameter: 30,
+        diameter: 40,
+        taper: 1.0,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('wide taper (taper=1.5 — top wider than base)', () => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        taper: 1.5,
+      };
+      const result = generateVase(params);
+      expect(getPolygons(result).length).toBeGreaterThan(0);
+      expect(allVerticesFinite(result)).toBe(true);
+    });
+
+    it('narrow taper (taper=0.5 — top narrower than base)', () => {
+      const params: VaseParams = {
+        ...LOW_RES_PARAMS,
+        taper: 0.5,
       };
       const result = generateVase(params);
       expect(getPolygons(result).length).toBeGreaterThan(0);
