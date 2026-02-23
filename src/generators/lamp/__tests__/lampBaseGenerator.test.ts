@@ -3,11 +3,19 @@ import { generateLampBase } from '../lampBaseGenerator';
 import { DEFAULT_LAMP_PARAMS } from '@/types/design';
 import type { LampParams, SocketType, ConnectionType, CrossSection } from '@/types/design';
 
+/** Lightweight params for tests — resolution: 16 (not 128) to avoid OOM on 16GB machines */
+const TEST_LAMP_PARAMS: LampParams = {
+  ...DEFAULT_LAMP_PARAMS,
+  resolution: 16,
+  base: { ...DEFAULT_LAMP_PARAMS.base, height: 40 },
+  shade: { ...DEFAULT_LAMP_PARAMS.shade, height: 60 },
+};
+
 function makeParams(overrides: Partial<LampParams> = {}): LampParams {
   return {
-    ...DEFAULT_LAMP_PARAMS,
-    base: { ...DEFAULT_LAMP_PARAMS.base },
-    shade: { ...DEFAULT_LAMP_PARAMS.shade },
+    ...TEST_LAMP_PARAMS,
+    base: { ...TEST_LAMP_PARAMS.base },
+    shade: { ...TEST_LAMP_PARAMS.shade },
     ...overrides,
   };
 }

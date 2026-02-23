@@ -24,9 +24,13 @@ describe('ParameterPanel', () => {
     expect(screen.getByTestId('object-type-lamp')).toBeInTheDocument();
   });
 
-  it('lamp button is disabled', () => {
+  it('lamp button is enabled and switches object type', async () => {
+    const user = userEvent.setup();
     render(<ParameterPanel />);
-    expect(screen.getByTestId('object-type-lamp')).toBeDisabled();
+    const lampBtn = screen.getByTestId('object-type-lamp');
+    expect(lampBtn).toBeEnabled();
+    await user.click(lampBtn);
+    expect(useDesignStore.getState().objectType).toBe('lamp');
   });
 
   it('renders style selector', () => {

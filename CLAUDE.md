@@ -156,7 +156,7 @@ npm run generate     # (custom) Test geometry generation in Node
 
 7. **Subagent permissions**: Task tool agents may be denied Write/Edit/Bash permissions by the user's permission mode. If dispatching parallel agents for implementation, the user may need to approve permissions. Consider implementing directly if agents fail.
 
-8. **Lamp test performance**: Lamp generator tests involve CSG boolean operations on decorative shells and are very slow (~13 min for full shade suite). Run targeted tests during development rather than the full suite: `npx vitest run <specific-test-file>`.
+8. **Test resolution matters**: Geometry tests must use low resolution (16-32) and small heights. Spiral-fin mode overrides `resolution` to `finCount * 10`, so tests using spiral-fin must also set `finCount: 8` (not the default 55). See `TEST_PARAMS_CLASSIC` pattern in vase tests.
 
 ## Design Reference
 
@@ -341,26 +341,31 @@ This ensures continuity between sessions. Never leave work uncommitted or undocu
   - **Lamp param UI components**: `LampParamSlider.tsx`, `LampParamToggle.tsx`, `LampParamSelect.tsx` — mirror vase param components but use `setLampBaseParam`/`setLampShadeParam` via `part` prop.
   - **94 new tests**: socketConstants (23), lampBaseGenerator (12), lampShadeGenerator (19), lampGenerator (3), shellBuilder (26), designStore lamp params (11).
 
+- **Batch 5b — Lamp Frontend**: 398 total tests, all passing in ~20s.
+  - **lampParameterConfig.ts**: Config arrays mirroring `parameterConfig.ts` but keyed to `DecorativeShellParams`. LAMP_SHAPE_PARAMS, LAMP_CROSS_SECTION_SUB_PARAMS, LAMP_RIDGE_PARAMS, LAMP_FIN_PARAMS, LAMP_ADVANCED_PARAMS (no baseThickness).
+  - **SocketTypePicker.tsx**: 2×2 grid picker for E12/E14/E26/E27 with name, description, diameter. Amber active state, radiogroup a11y.
+  - **LampCrossSectionPicker.tsx**: Clone of CrossSectionPicker with `part: 'base' | 'shade'` prop. Uses shared `shapePaths.ts`.
+  - **LampStyleSelector.tsx**: Clone of StyleSelector with `part` prop. Classic/Spiral Fin segmented control.
+  - **shapePaths.ts**: Extracted `makeShapePath()` from CrossSectionPicker for reuse by lamp picker.
+  - **LampParameterPanel.tsx**: Main lamp panel — Socket section (picker + connection type + wire channel), Base/Shade tab switcher with PartParams per tab (style, cross-section, shape params, ridges/fins, advanced), global resolution slider.
+  - **ObjectTypeToggle.tsx**: Removed disabled/Coming soon from lamp button. Both buttons now wired to `setObjectType`.
+  - **ParameterPanel.tsx**: Dispatches between vase content and `<LampParameterPanel />` based on `objectType`.
+  - **ExportButton.tsx**: Lamp mode shows dropdown with Combined/Base Only/Shade Only options. Vase mode unchanged.
+  - **ViewportContainer.tsx**: Lamp mode computes dimensions from `base.height + shade.height`, max diameters/ridgeDepth.
+  - **ModelRenderer.tsx**: Lamp mode uses `meshPhysicalMaterial` with transmission=0.4, thickness=2, ior=1.5.
+  - **Test optimization**: Lamp tests use `resolution: 16` + reduced heights. geometryConverter tests use `style: 'classic'` (was spiral-fin which silently boosted to 550 segments). Vitest threads reduced to max 4 for 16GB machines. Full suite ~20s.
+  - **Updated test**: ParameterPanel test for lamp button changed from `toBeDisabled()` to `toBeEnabled()` + click verification.
+
 ### Known Issues
 
 - **Sharp ridge modulation**: The triangle wave formula can produce modulation values > 1 for negative angles (from `atan2`), meaning ridges can be deeper than `ridgeDepth` in some orientations.
 - **Polygon/star spiral-fin broken**: Polygon and star cross-sections produce malformed geometry in spiral-fin mode. Tracked in [#2](https://github.com/potalora/luminaforge/issues/2).
-- **Lamp CSG tests are slow**: `lampShadeGenerator` tests take ~13 min (12 cross-sections × boolean subtract). Run lamp tests selectively: `npx vitest run src/generators/lamp/__tests__/lampBaseGenerator.test.ts`
+- **Lamp CSG tests optimized**: Lamp tests now use `resolution: 16` + reduced heights (matching vase test pattern). Full suite runs in ~20s. Previously took ~13 min due to `DEFAULT_LAMP_PARAMS` using `resolution: 128`.
 - **RidgeProfile valid values**: `'round' | 'sharp' | 'flat'` — NOT `'pointed'`.
 
 ### Planned Next Steps
 
-- **Batch 5b — Lamp Frontend** (next session, in progress):
-  - Create `lampParameterConfig.ts` — config arrays for lamp base/shade decorative params (mirrors `parameterConfig.ts` pattern)
-  - Create `SocketTypePicker.tsx` — visual picker for E12/E14/E26/E27 socket types
-  - Create `LampParameterPanel.tsx` — main lamp panel with base/shade tab switcher + decorative param sections per part
-  - Create `LampCrossSectionPicker.tsx` — cross-section picker wired to lamp base/shade store
-  - Create `LampStyleSelector.tsx` — style selector wired to lamp base/shade store
-  - Update `ObjectTypeToggle.tsx` — enable lamp button (currently disabled with "Coming soon"), wire to `setObjectType`
-  - Update `ParameterPanel.tsx` — dispatch between vase panel and `LampParameterPanel` based on `objectType`
-  - Update `ExportButton.tsx` — add part dropdown for lamp export (combined/base/shade)
-  - Update `ViewportContainer.tsx` — read lamp dimensions for camera/plate sizing when `objectType === 'lamp'`
-  - Update `ModelRenderer.tsx` — use MeshPhysicalMaterial (transmission) for lamp shades
-  - **Frontend work requires the `frontend-design` skill** — invoke before building any UI
+- **Visual testing**: `PORT=3001 npm run dev` — toggle between Vase/Lamp, verify params work, export STLs
 - **Fix polygon/star spiral-fin bug** ([#2](https://github.com/potalora/luminaforge/issues/2))
 - Consider progressive refinement: low-res preview during slider drag, full-res on release
+- Phase 3 lamp-specific features (light patterns, Voronoi cutouts)

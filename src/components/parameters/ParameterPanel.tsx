@@ -2,6 +2,7 @@
 
 import { useDesignStore } from '@/store/designStore';
 import { ObjectTypeToggle } from './ObjectTypeToggle';
+import { LampParameterPanel } from './LampParameterPanel';
 import { StyleSelector } from './StyleSelector';
 import { CrossSectionPicker } from './CrossSectionPicker';
 import { ParamSection } from './ParamSection';
@@ -63,8 +64,9 @@ function renderParam(config: ParamConfig, params: VaseParams) {
   }
 }
 
-/** Full parameter panel: object type toggle + style + shape + ridges/fins + advanced */
+/** Full parameter panel: object type toggle + vase or lamp params */
 export function ParameterPanel() {
+  const objectType = useDesignStore((s) => s.objectType);
   const params = useDesignStore((s) => s.params);
 
   const filterVisible = (configs: ParamConfig[]) =>
@@ -80,35 +82,43 @@ export function ParameterPanel() {
 
       <ObjectTypeToggle />
 
-      <div className="mt-3">
-        <StyleSelector />
-      </div>
+      {objectType === 'vase' ? (
+        <>
+          <div className="mt-3">
+            <StyleSelector />
+          </div>
 
-      <div className="mt-4">
-        <ParamSection title="Shape" defaultOpen>
-          <CrossSectionPicker />
-          {filterVisible(CROSS_SECTION_SUB_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-          {filterVisible(SHAPE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-        </ParamSection>
-      </div>
+          <div className="mt-4">
+            <ParamSection title="Shape" defaultOpen>
+              <CrossSectionPicker />
+              {filterVisible(CROSS_SECTION_SUB_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+              {filterVisible(SHAPE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+            </ParamSection>
+          </div>
 
-      <div className="border-t border-bg-tertiary">
-        {isClassic ? (
-          <ParamSection title="Ridges" defaultOpen>
-            {filterVisible(RIDGE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-          </ParamSection>
-        ) : (
-          <ParamSection title="Fins" defaultOpen>
-            {filterVisible(FIN_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-          </ParamSection>
-        )}
-      </div>
+          <div className="border-t border-bg-tertiary">
+            {isClassic ? (
+              <ParamSection title="Ridges" defaultOpen>
+                {filterVisible(RIDGE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+              </ParamSection>
+            ) : (
+              <ParamSection title="Fins" defaultOpen>
+                {filterVisible(FIN_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+              </ParamSection>
+            )}
+          </div>
 
-      <div className="border-t border-bg-tertiary">
-        <ParamSection title="Advanced" defaultOpen={false}>
-          {filterVisible(ADVANCED_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-        </ParamSection>
-      </div>
+          <div className="border-t border-bg-tertiary">
+            <ParamSection title="Advanced" defaultOpen={false}>
+              {filterVisible(ADVANCED_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+            </ParamSection>
+          </div>
+        </>
+      ) : (
+        <div className="mt-3">
+          <LampParameterPanel />
+        </div>
+      )}
     </div>
   );
 }
