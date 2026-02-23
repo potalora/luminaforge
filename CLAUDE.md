@@ -45,14 +45,21 @@ src/
 
 ## Key Files You'll Work With Most
 
-- `src/generators/vase/vaseGenerator.ts` — Core vase geometry logic
-- `src/generators/lamp/lampGenerator.ts` — Core lamp geometry logic
-- `src/generators/worker.ts` — Web Worker entry (Comlink exposed API)
-- `src/store/designStore.ts` — Central parameter state (Zustand)
+- `src/generators/vase/vaseGenerator.ts` — Core vase geometry (thin wrapper around shared shellBuilder)
+- `src/generators/lamp/lampGenerator.ts` — Core lamp geometry (orchestrates base + shade)
+- `src/generators/lamp/lampBaseGenerator.ts` — Lamp base: decorative shell + socket cavity + wire channel + lip
+- `src/generators/lamp/lampShadeGenerator.ts` — Lamp shade: decorative shell with open bottom + inner lip
+- `src/generators/lamp/socketConstants.ts` — E12/E14/E26/E27 socket specs, wire channel, connection lip constants
+- `src/generators/shared/shellBuilder.ts` — `buildDecorativeShell()` — shared engine for vase + lamp parts
+- `src/generators/shared/offsetPolygon.ts` — `offsetPolygonInward()` — normal-based wall offset
+- `src/generators/worker.ts` — Web Worker entry (Comlink: generateVase, exportSTL, generateLamp, exportLampSTL)
+- `src/store/designStore.ts` — Central state: vaseParams, lampParams, objectType, nested setters
+- `src/types/design.ts` — All param types: DecorativeShellParams, VaseParams, LampParams, defaults
 - `src/components/editor/EditorLayout.tsx` — Main editor composition
 - `src/components/viewport/ModelRenderer.tsx` — Three.js mesh from JSCAD output
-- `src/components/parameters/ParamSlider.tsx` — Most-used UI component
-- `src/hooks/useGeometryWorker.ts` — Worker communication hook
+- `src/components/parameters/ParameterPanel.tsx` — Vase parameter panel (needs lamp dispatch)
+- `src/components/parameters/parameterConfig.ts` — Vase param config arrays
+- `src/hooks/useGeometryWorker.ts` — Worker communication hook (objectType dispatch)
 
 ## Development Commands
 
@@ -146,6 +153,10 @@ npm run generate     # (custom) Test geometry generation in Node
 5. **Manifold geometry**: JSCAD generally produces manifold output, but complex boolean operations can sometimes create non-manifold edges. Validate with `@jscad/modeling`'s `measureVolume` — if it returns negative or zero, the mesh is likely non-manifold.
 
 6. **R3F re-renders**: The `<Canvas>` component re-renders on parent re-renders. Use `React.memo` on viewport sub-components and Zustand selectors to prevent unnecessary re-renders during parameter changes.
+
+7. **Subagent permissions**: Task tool agents may be denied Write/Edit/Bash permissions by the user's permission mode. If dispatching parallel agents for implementation, the user may need to approve permissions. Consider implementing directly if agents fail.
+
+8. **Lamp test performance**: Lamp generator tests involve CSG boolean operations on decorative shells and are very slow (~13 min for full shade suite). Run targeted tests during development rather than the full suite: `npx vitest run <specific-test-file>`.
 
 ## Design Reference
 
@@ -317,13 +328,39 @@ This ensures continuity between sessions. Never leave work uncommitted or undocu
   - **6 new offsetPolygonInward unit tests**: circle uniform offset, all-finite, point count preservation, minRadius clamp, square perpendicular offset, star robustness
   - **3 new slope compensation integration tests**: bulbous+thick wall, hourglass+thick wall, steep taper+thick wall
 
+- **Batch 5a — Lamp Engine + Plumbing**: 398 total tests, all passing.
+  - **DecorativeShellParams shared interface**: Extracted shared decorative params used by vase, lamp base, and lamp shade. `VaseParams extends DecorativeShellParams`. Defined in `src/types/design.ts`.
+  - **Shared shellBuilder**: `buildDecorativeShell()` in `src/generators/shared/shellBuilder.ts` — extracted from vase generator, used by both vase and lamp generators. Interface: `(params: DecorativeShellParams, options: ShellBuildOptions) => Geom3`.
+  - **Shared offsetPolygon**: `offsetPolygonInward()` extracted to `src/generators/shared/offsetPolygon.ts`.
+  - **Vase refactor**: `vaseGenerator.ts` now a thin wrapper calling `buildDecorativeShell` twice (outer + inner) + boolean subtract. Re-exports `offsetPolygonInward` for backward compat.
+  - **Socket constants**: `src/generators/lamp/socketConstants.ts` — E12, E14, E26, E27 specs (IEC 60061), wire channel (SPT-1: 7mm×4mm), connection lip (friction-fit: 5mm height, 0.3mm tolerance; gravity-sit: half height).
+  - **Lamp generators**: `lampBaseGenerator.ts` (hollow decorative base + socket cavity + optional wire channel + connection lip), `lampShadeGenerator.ts` (hollow decorative shade with open bottom + inner connection lip), `lampGenerator.ts` (orchestrator: base + shade positioned on top via union).
+  - **Store dual params**: `designStore.ts` has `vaseParams`, `lampParams` with backward-compatible `params` alias (= `vaseParams`). Nested setters: `setLampParam`, `setLampBaseParam`, `setLampShadeParam`, `setLampParams`, `resetLampParams`.
+  - **Worker lamp methods**: `worker.ts` has `generateLamp(params)` + `exportLampSTL(params, part)` where part is `'combined' | 'base' | 'shade'`.
+  - **Hook objectType dispatch**: `useGeometryWorker.ts` dispatches to `api.generateVase` or `api.generateLamp` based on `objectType`. `exportSTL` accepts optional `LampExportPart` for per-part export.
+  - **Lamp param UI components**: `LampParamSlider.tsx`, `LampParamToggle.tsx`, `LampParamSelect.tsx` — mirror vase param components but use `setLampBaseParam`/`setLampShadeParam` via `part` prop.
+  - **94 new tests**: socketConstants (23), lampBaseGenerator (12), lampShadeGenerator (19), lampGenerator (3), shellBuilder (26), designStore lamp params (11).
+
 ### Known Issues
 
 - **Sharp ridge modulation**: The triangle wave formula can produce modulation values > 1 for negative angles (from `atan2`), meaning ridges can be deeper than `ridgeDepth` in some orientations.
 - **Polygon/star spiral-fin broken**: Polygon and star cross-sections produce malformed geometry in spiral-fin mode. Tracked in [#2](https://github.com/potalora/luminaforge/issues/2).
+- **Lamp CSG tests are slow**: `lampShadeGenerator` tests take ~13 min (12 cross-sections × boolean subtract). Run lamp tests selectively: `npx vitest run src/generators/lamp/__tests__/lampBaseGenerator.test.ts`
+- **RidgeProfile valid values**: `'round' | 'sharp' | 'flat'` — NOT `'pointed'`.
 
 ### Planned Next Steps
 
+- **Batch 5b — Lamp Frontend** (next session, in progress):
+  - Create `lampParameterConfig.ts` — config arrays for lamp base/shade decorative params (mirrors `parameterConfig.ts` pattern)
+  - Create `SocketTypePicker.tsx` — visual picker for E12/E14/E26/E27 socket types
+  - Create `LampParameterPanel.tsx` — main lamp panel with base/shade tab switcher + decorative param sections per part
+  - Create `LampCrossSectionPicker.tsx` — cross-section picker wired to lamp base/shade store
+  - Create `LampStyleSelector.tsx` — style selector wired to lamp base/shade store
+  - Update `ObjectTypeToggle.tsx` — enable lamp button (currently disabled with "Coming soon"), wire to `setObjectType`
+  - Update `ParameterPanel.tsx` — dispatch between vase panel and `LampParameterPanel` based on `objectType`
+  - Update `ExportButton.tsx` — add part dropdown for lamp export (combined/base/shade)
+  - Update `ViewportContainer.tsx` — read lamp dimensions for camera/plate sizing when `objectType === 'lamp'`
+  - Update `ModelRenderer.tsx` — use MeshPhysicalMaterial (transmission) for lamp shades
+  - **Frontend work requires the `frontend-design` skill** — invoke before building any UI
 - **Fix polygon/star spiral-fin bug** ([#2](https://github.com/potalora/luminaforge/issues/2))
-- **Batch 5**: Presets gallery, additional shapes, lamp generator (Phase 2 scope)
 - Consider progressive refinement: low-res preview during slider drag, full-res on release

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { StoreApi } from 'zustand';
 import { createDesignStore, type DesignState } from '../designStore';
-import { DEFAULT_VASE_PARAMS } from '@/types/design';
+import { DEFAULT_VASE_PARAMS, DEFAULT_LAMP_PARAMS } from '@/types/design';
 
 describe('designStore', () => {
   let store: StoreApi<DesignState>;
@@ -144,6 +144,85 @@ describe('designStore', () => {
       store.getState().setParams({ height: 200 });
       const paramsAfter = store.getState().params;
       expect(paramsAfter).not.toBe(paramsBefore);
+    });
+  });
+
+  describe('lamp params', () => {
+    it('lampParams match DEFAULT_LAMP_PARAMS values', () => {
+      const { lampParams } = store.getState();
+      expect(lampParams.socketType).toBe(DEFAULT_LAMP_PARAMS.socketType);
+      expect(lampParams.connectionType).toBe(DEFAULT_LAMP_PARAMS.connectionType);
+      expect(lampParams.wireChannelEnabled).toBe(DEFAULT_LAMP_PARAMS.wireChannelEnabled);
+      expect(lampParams.resolution).toBe(DEFAULT_LAMP_PARAMS.resolution);
+      expect(lampParams.base.height).toBe(DEFAULT_LAMP_PARAMS.base.height);
+      expect(lampParams.shade.height).toBe(DEFAULT_LAMP_PARAMS.shade.height);
+    });
+
+    it('setLampParam updates a top-level lamp parameter', () => {
+      store.getState().setLampParam('socketType', 'E14');
+      expect(store.getState().lampParams.socketType).toBe('E14');
+    });
+
+    it('setLampParam leaves other lamp params unchanged', () => {
+      const original = store.getState().lampParams.connectionType;
+      store.getState().setLampParam('socketType', 'E14');
+      expect(store.getState().lampParams.connectionType).toBe(original);
+    });
+
+    it('setLampBaseParam updates nested base param', () => {
+      store.getState().setLampBaseParam('height', 80);
+      expect(store.getState().lampParams.base.height).toBe(80);
+    });
+
+    it('setLampBaseParam leaves shade unchanged', () => {
+      const originalShadeHeight = store.getState().lampParams.shade.height;
+      store.getState().setLampBaseParam('height', 80);
+      expect(store.getState().lampParams.shade.height).toBe(originalShadeHeight);
+    });
+
+    it('setLampShadeParam updates nested shade param', () => {
+      store.getState().setLampShadeParam('diameter', 200);
+      expect(store.getState().lampParams.shade.diameter).toBe(200);
+    });
+
+    it('setLampShadeParam leaves base unchanged', () => {
+      const originalBaseDiameter = store.getState().lampParams.base.diameter;
+      store.getState().setLampShadeParam('diameter', 200);
+      expect(store.getState().lampParams.base.diameter).toBe(originalBaseDiameter);
+    });
+
+    it('setLampParams updates multiple top-level params', () => {
+      store.getState().setLampParams({ socketType: 'E27', wireChannelEnabled: false });
+      expect(store.getState().lampParams.socketType).toBe('E27');
+      expect(store.getState().lampParams.wireChannelEnabled).toBe(false);
+    });
+
+    it('resetLampParams restores defaults', () => {
+      store.getState().setLampParam('socketType', 'E14');
+      store.getState().setLampBaseParam('height', 999);
+      store.getState().setLampShadeParam('diameter', 999);
+      store.getState().resetLampParams();
+      const { lampParams } = store.getState();
+      expect(lampParams.socketType).toBe(DEFAULT_LAMP_PARAMS.socketType);
+      expect(lampParams.base.height).toBe(DEFAULT_LAMP_PARAMS.base.height);
+      expect(lampParams.shade.diameter).toBe(DEFAULT_LAMP_PARAMS.shade.diameter);
+    });
+
+    it('switching objectType preserves both param sets', () => {
+      store.getState().setParam('height', 300);
+      store.getState().setLampBaseParam('height', 80);
+      store.getState().setObjectType('lamp');
+      expect(store.getState().params.height).toBe(300);
+      expect(store.getState().lampParams.base.height).toBe(80);
+      store.getState().setObjectType('vase');
+      expect(store.getState().params.height).toBe(300);
+      expect(store.getState().lampParams.base.height).toBe(80);
+    });
+
+    it('vaseParams and params stay in sync', () => {
+      store.getState().setParam('height', 250);
+      expect(store.getState().vaseParams.height).toBe(250);
+      expect(store.getState().params.height).toBe(250);
     });
   });
 });

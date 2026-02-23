@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as Comlink from 'comlink';
-import type { GeometryResult, GeometryWorkerAPI } from '@/types/geometry';
+import type { GeometryResult, GeometryWorkerAPI, LampExportPart } from '@/types/geometry';
 import { useDesignStore } from '@/store/designStore';
 
 const DEBOUNCE_MS = 150;
@@ -11,7 +11,7 @@ export function useGeometryWorker(): {
   geometry: GeometryResult | null;
   isGenerating: boolean;
   error: string | null;
-  exportSTL: () => Promise<void>;
+  exportSTL: (lampPart?: LampExportPart) => Promise<void>;
 } {
   const [geometry, setGeometry] = useState<GeometryResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -38,7 +38,9 @@ export function useGeometryWorker(): {
   }, []);
 
   // Subscribe to param changes and trigger debounced generation
-  const params = useDesignStore((s) => s.params);
+  const objectType = useDesignStore((s) => s.objectType);
+  const vaseParams = useDesignStore((s) => s.params);
+  const lampParams = useDesignStore((s) => s.lampParams);
 
   useEffect(() => {
     setIsGenerating(true);
@@ -54,7 +56,12 @@ export function useGeometryWorker(): {
       const thisGeneration = ++generationIdRef.current;
 
       try {
-        const result = await api.generateVase(params);
+        let result: GeometryResult;
+        if (objectType === 'lamp') {
+          result = await api.generateLamp(lampParams);
+        } else {
+          result = await api.generateVase(vaseParams);
+        }
 
         // Discard stale results
         if (thisGeneration !== generationIdRef.current) return;
@@ -79,21 +86,34 @@ export function useGeometryWorker(): {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [params]);
+  }, [objectType, vaseParams, lampParams]);
 
-  const exportSTL = useCallback(async () => {
+  const exportSTL = useCallback(async (lampPart?: LampExportPart) => {
     const api = apiRef.current;
     if (!api) return;
 
     try {
       setIsGenerating(true);
-      const stlBuffer = await api.exportSTL(params);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+
+      let stlBuffer: ArrayBuffer;
+      let filename: string;
+
+      if (objectType === 'lamp') {
+        const part = lampPart ?? 'combined';
+        stlBuffer = await api.exportLampSTL(lampParams, part);
+        const partSuffix = part === 'combined' ? '' : `-${part}`;
+        filename = `luminaforge-lamp${partSuffix}-${timestamp}.stl`;
+      } else {
+        stlBuffer = await api.exportSTL(vaseParams);
+        filename = `luminaforge-vase-${timestamp}.stl`;
+      }
+
       const blob = new Blob([stlBuffer], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `luminaforge-vase-${timestamp}.stl`;
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -101,7 +121,7 @@ export function useGeometryWorker(): {
     } finally {
       setIsGenerating(false);
     }
-  }, [params]);
+  }, [objectType, vaseParams, lampParams]);
 
   return { geometry, isGenerating, error, exportSTL };
 }
