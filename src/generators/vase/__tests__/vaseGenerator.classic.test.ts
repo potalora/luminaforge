@@ -214,6 +214,52 @@ describe('generateVase (classic style)', () => {
     });
   });
 
+  describe('polygon/star with ridges resolution', () => {
+    it('polygon cross-section with ridges has comparable complexity to circle', () => {
+      const polygonResult = generateVase({
+        ...TEST_PARAMS_CLASSIC,
+        crossSection: 'polygon',
+        polygonSides: 6,
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      });
+      const circleResult = generateVase({
+        ...TEST_PARAMS_CLASSIC,
+        crossSection: 'circle',
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      });
+      const polyCount = getPolygons(polygonResult).length;
+      const circleCount = getPolygons(circleResult).length;
+      expect(polyCount).toBeGreaterThan(0);
+      expect(allVerticesFinite(polygonResult)).toBe(true);
+      // With uniform segment count, polygon complexity should be in the same ballpark as circle
+      expect(polyCount).toBeGreaterThan(circleCount * 0.3);
+    });
+
+    it('star cross-section with ridges has comparable complexity to circle', () => {
+      const starResult = generateVase({
+        ...TEST_PARAMS_CLASSIC,
+        crossSection: 'star',
+        starPoints: 5,
+        starInnerRatio: 0.5,
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      });
+      const circleResult = generateVase({
+        ...TEST_PARAMS_CLASSIC,
+        crossSection: 'circle',
+        ridgeCount: 8,
+        ridgeDepth: 5,
+      });
+      const starCount = getPolygons(starResult).length;
+      const circleCount = getPolygons(circleResult).length;
+      expect(starCount).toBeGreaterThan(0);
+      expect(allVerticesFinite(starResult)).toBe(true);
+      expect(starCount).toBeGreaterThan(circleCount * 0.3);
+    });
+  });
+
   describe('smooth inner wall', () => {
     it('smoothInnerWall: true generates valid geometry', () => {
       const params: VaseParams = {
