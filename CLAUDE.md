@@ -320,10 +320,8 @@ This ensures continuity between sessions. Never leave work uncommitted or undocu
 ### Known Issues
 
 - **Sharp ridge modulation**: The triangle wave formula can produce modulation values > 1 for negative angles (from `atan2`), meaning ridges can be deeper than `ridgeDepth` in some orientations.
-- **Polygon/star spiral-fin broken**: Polygon and star cross-sections produce malformed geometry in spiral-fin mode. Tracked in [#2](https://github.com/potalora/luminaforge/issues/2).
 
 ### Planned Next Steps
 
-- **Fix polygon/star spiral-fin bug** ([#2](https://github.com/potalora/luminaforge/issues/2))
 - **Batch 5**: Presets gallery, additional shapes, lamp generator (Phase 2 scope)
 - Consider progressive refinement: low-res preview during slider drag, full-res on release
