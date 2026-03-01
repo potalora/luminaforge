@@ -1,8 +1,7 @@
 'use client';
 
 import { useDesignStore } from '@/store/designStore';
-import { ObjectTypeToggle } from './ObjectTypeToggle';
-import { LampParameterPanel } from './LampParameterPanel';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { StyleSelector } from './StyleSelector';
 import { CrossSectionPicker } from './CrossSectionPicker';
 import { ParamSection } from './ParamSection';
@@ -64,9 +63,8 @@ function renderParam(config: ParamConfig, params: VaseParams) {
   }
 }
 
-/** Full parameter panel: object type toggle + vase or lamp params */
+/** Full parameter panel: vase params */
 export function ParameterPanel() {
-  const objectType = useDesignStore((s) => s.objectType);
   const params = useDesignStore((s) => s.params);
 
   const filterVisible = (configs: ParamConfig[]) =>
@@ -76,49 +74,44 @@ export function ParameterPanel() {
 
   return (
     <div className="flex flex-col gap-2 p-5 sidebar-gradient">
-      <h1 className="font-display text-xl font-light text-text-primary tracking-wide mb-2">
-        LuminaForge
-      </h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-display text-xl font-light text-text-primary tracking-wide">
+          LuminaForge
+        </h1>
+        <ThemeToggle />
+      </div>
 
-      <ObjectTypeToggle />
+      <div className="mt-3">
+        <ParamSection title="Style" defaultOpen>
+          <StyleSelector />
+        </ParamSection>
+      </div>
 
-      {objectType === 'vase' ? (
-        <>
-          <div className="mt-3">
-            <StyleSelector />
-          </div>
+      <div className="border-t border-bg-tertiary">
+        <ParamSection title="Shape" defaultOpen>
+          <CrossSectionPicker />
+          {filterVisible(CROSS_SECTION_SUB_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+          {filterVisible(SHAPE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+        </ParamSection>
+      </div>
 
-          <div className="mt-4">
-            <ParamSection title="Shape" defaultOpen>
-              <CrossSectionPicker />
-              {filterVisible(CROSS_SECTION_SUB_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-              {filterVisible(SHAPE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-            </ParamSection>
-          </div>
+      <div className="border-t border-bg-tertiary">
+        {isClassic ? (
+          <ParamSection title="Ridges" defaultOpen>
+            {filterVisible(RIDGE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+          </ParamSection>
+        ) : (
+          <ParamSection title="Fins" defaultOpen>
+            {filterVisible(FIN_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+          </ParamSection>
+        )}
+      </div>
 
-          <div className="border-t border-bg-tertiary">
-            {isClassic ? (
-              <ParamSection title="Ridges" defaultOpen>
-                {filterVisible(RIDGE_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-              </ParamSection>
-            ) : (
-              <ParamSection title="Fins" defaultOpen>
-                {filterVisible(FIN_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-              </ParamSection>
-            )}
-          </div>
-
-          <div className="border-t border-bg-tertiary">
-            <ParamSection title="Advanced" defaultOpen={false}>
-              {filterVisible(ADVANCED_PARAMS).map((c) => renderParam(c, params as VaseParams))}
-            </ParamSection>
-          </div>
-        </>
-      ) : (
-        <div className="mt-3">
-          <LampParameterPanel />
-        </div>
-      )}
+      <div className="border-t border-bg-tertiary">
+        <ParamSection title="Advanced" defaultOpen={false}>
+          {filterVisible(ADVANCED_PARAMS).map((c) => renderParam(c, params as VaseParams))}
+        </ParamSection>
+      </div>
     </div>
   );
 }

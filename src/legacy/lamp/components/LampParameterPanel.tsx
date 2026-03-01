@@ -87,27 +87,31 @@ function PartParams({ part }: { part: LampPart }) {
 
   return (
     <>
-      <LampStyleSelector part={part} />
-
-      <ParamSection title="Shape" defaultOpen>
-        <LampCrossSectionPicker part={part} />
-        {filterVisible(LAMP_CROSS_SECTION_SUB_PARAMS, partParams).map((c) =>
-          renderLampParam(c, part, partParams),
-        )}
-        {filterVisible(LAMP_SHAPE_PARAMS, partParams).map((c) =>
-          renderLampParam(c, part, partParams),
-        )}
+      <ParamSection title="Style" defaultOpen>
+        <LampStyleSelector part={part} />
       </ParamSection>
 
       <div className="border-t border-bg-tertiary">
+        <ParamSection title="Shape" defaultOpen>
+          <LampCrossSectionPicker part={part} />
+          {filterVisible(LAMP_CROSS_SECTION_SUB_PARAMS, partParams).map((c) =>
+            renderLampParam(c, part, partParams),
+          )}
+          {filterVisible(LAMP_SHAPE_PARAMS, partParams).map((c) =>
+            renderLampParam(c, part, partParams),
+          )}
+        </ParamSection>
+      </div>
+
+      <div className="border-t border-bg-tertiary">
         {isClassic ? (
-          <ParamSection title="Ridges" defaultOpen>
+          <ParamSection title="Ridges" defaultOpen={false}>
             {filterVisible(LAMP_RIDGE_PARAMS, partParams).map((c) =>
               renderLampParam(c, part, partParams),
             )}
           </ParamSection>
         ) : (
-          <ParamSection title="Fins" defaultOpen>
+          <ParamSection title="Fins" defaultOpen={false}>
             {filterVisible(LAMP_FIN_PARAMS, partParams).map((c) =>
               renderLampParam(c, part, partParams),
             )}
@@ -249,28 +253,27 @@ export function LampParameterPanel() {
       </div>
 
       {/* Global resolution */}
-      <div className="border-t border-bg-tertiary pt-2">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-xs text-text-secondary font-sans tracking-wide uppercase">
-              Resolution
-            </label>
-            <span className="text-xs font-mono text-text-primary">
-              {resolution}
-              <span className="text-text-tertiary ml-0.5">seg</span>
-            </span>
+      <div className="border-t border-bg-tertiary">
+        <ParamSection title="Resolution" defaultOpen={false}>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-text-primary">
+                {resolution}
+                <span className="text-text-tertiary ml-0.5">seg</span>
+              </span>
+            </div>
+            <input
+              type="range"
+              min={32}
+              max={256}
+              step={8}
+              value={resolution}
+              onChange={handleResolutionChange}
+              data-testid="lamp-resolution-slider"
+              aria-label="Resolution"
+            />
           </div>
-          <input
-            type="range"
-            min={32}
-            max={256}
-            step={8}
-            value={resolution}
-            onChange={handleResolutionChange}
-            data-testid="lamp-resolution-slider"
-            aria-label="Resolution"
-          />
-        </div>
+        </ParamSection>
       </div>
     </div>
   );

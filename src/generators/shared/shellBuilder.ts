@@ -1,7 +1,7 @@
 /**
  * Shared decorative shell builder.
  * Builds a solid shape via extrudeFromSlices with per-layer profile scaling,
- * twist, and ridge/fin modulation. Used by vase, lamp base, and lamp shade.
+ * twist, and ridge/fin modulation. Used by vase generator.
  */
 
 import { extrusions } from '@jscad/modeling';
@@ -23,6 +23,7 @@ export interface ShellBuildOptions {
   skipModulation?: boolean;
   closedBottom?: boolean;   // true = cap with solid bottom slice
   baseThickness?: number;   // inner shell Z offset (solid bottom)
+  invertProfile?: boolean;  // true = narrow at Z=0, wide at Z=height
 }
 
 /**
@@ -34,7 +35,7 @@ export function buildDecorativeShell(
   params: DecorativeShellParams,
   options: ShellBuildOptions
 ): Geom3 {
-  const { resolution, wallInset, skipModulation = false } = options;
+  const { resolution, wallInset, skipModulation = false, invertProfile = false } = options;
   const baseRadius = params.diameter / 2;
   const minRadius = wallInset * 0.3;
   const sliceCount = Math.max(
@@ -74,32 +75,41 @@ export function buildDecorativeShell(
   let baseSlicePoints: [number, number][];
 
   {
+    const initialProfileScale = invertProfile
+      ? getProfileScale(params.profileCurve, 1, params.taper)
+      : 1;
+    const initialRadius = baseRadius * initialProfileScale;
+
     const scaledBasePoints = basePoints.map(
-      ([x, y]) => [x * baseRadius, y * baseRadius] as [number, number]
+      ([x, y]) => [x * initialRadius, y * initialRadius] as [number, number]
     );
 
     if (isSpiralFin) {
+      const finHeightAtBase = params.finHeight * initialProfileScale;
       baseSlicePoints = applyFinModulation(
         scaledBasePoints,
         params.finCount,
-        params.finHeight,
+        finHeightAtBase,
         params.finWidth
       );
     } else if (skipRidges) {
       baseSlicePoints = scaledBasePoints;
     } else {
+      const ridgeDepthAtBase = params.ridgeDepth * initialProfileScale;
       baseSlicePoints = applyRidgeModulation(
         scaledBasePoints,
         params.ridgeCount,
-        params.ridgeDepth,
+        ridgeDepthAtBase > 0 ? ridgeDepthAtBase : 0,
         params.ridgeProfile
       );
     }
 
     if (wallInset > 0) {
       const eps = 0.001;
-      const pLo = getProfileScale(params.profileCurve, 0, params.taper);
-      const pHi = getProfileScale(params.profileCurve, eps, params.taper);
+      const slopeT0 = invertProfile ? 1 : 0;
+      const slopeTeps = invertProfile ? 1 - eps : eps;
+      const pLo = getProfileScale(params.profileCurve, slopeT0, params.taper);
+      const pHi = getProfileScale(params.profileCurve, slopeTeps, params.taper);
       const dProfileDt = (pHi - pLo) / eps;
       const dR_dH = baseRadius * dProfileDt / params.height;
       const slopeCompensation = Math.sqrt(1 + dR_dH * dR_dH);
@@ -125,9 +135,10 @@ export function buildDecorativeShell(
         const t = progress;
         const height = t * params.height;
 
+        const profileT = invertProfile ? 1 - t : t;
         const profileScale = getProfileScale(
           params.profileCurve,
-          t,
+          profileT,
           params.taper
         );
         const layerRadius = baseRadius * profileScale;
@@ -163,9 +174,10 @@ export function buildDecorativeShell(
 
         if (wallInset > 0) {
           const eps = 0.001;
-          const pLo = getProfileScale(params.profileCurve, Math.max(0, t - eps), params.taper);
-          const pHi = getProfileScale(params.profileCurve, Math.min(1, t + eps), params.taper);
-          const dProfileDt = (pHi - pLo) / (Math.min(1, t + eps) - Math.max(0, t - eps));
+          const slopeT = invertProfile ? 1 - t : t;
+          const pLo = getProfileScale(params.profileCurve, Math.max(0, slopeT - eps), params.taper);
+          const pHi = getProfileScale(params.profileCurve, Math.min(1, slopeT + eps), params.taper);
+          const dProfileDt = (pHi - pLo) / (Math.min(1, slopeT + eps) - Math.max(0, slopeT - eps));
           const dR_dH = baseRadius * dProfileDt / params.height;
           const slopeCompensation = Math.sqrt(1 + dR_dH * dR_dH);
           const adjustedInset = wallInset * slopeCompensation;

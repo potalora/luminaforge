@@ -56,8 +56,8 @@ export const LAMP_SHAPE_PARAMS: LampParamConfig[] = [
     key: 'taper',
     label: 'Taper',
     type: 'slider',
-    min: 0.3,
-    max: 1.7,
+    min: -0.7,
+    max: 0.7,
     step: 0.01,
   },
   {

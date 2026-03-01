@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['src/legacy/**', 'node_modules/**'],
     environmentMatchGlobs: [
       ['src/components/**', 'jsdom'],
       ['src/hooks/**', 'jsdom'],
