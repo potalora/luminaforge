@@ -114,6 +114,64 @@ describe('generateVase (spiral-fin style)', () => {
     expect(allVerticesFinite(result)).toBe(true);
   });
 
+  it('works with polygon cross-section', () => {
+    const params: VaseParams = {
+      ...TEST_PARAMS_SPIRAL_FIN,
+      crossSection: 'polygon',
+      polygonSides: 6,
+    };
+    const result = generateVase(params);
+    expect(getPolygons(result).length).toBeGreaterThan(0);
+    expect(allVerticesFinite(result)).toBe(true);
+  });
+
+  it('works with star cross-section', () => {
+    const params: VaseParams = {
+      ...TEST_PARAMS_SPIRAL_FIN,
+      crossSection: 'star',
+      starPoints: 5,
+      starInnerRatio: 0.5,
+    };
+    const result = generateVase(params);
+    expect(getPolygons(result).length).toBeGreaterThan(0);
+    expect(allVerticesFinite(result)).toBe(true);
+  });
+
+  it('polygon + smoothInnerWall produces valid geometry with adequate complexity', () => {
+    const params: VaseParams = {
+      ...TEST_PARAMS_SPIRAL_FIN,
+      crossSection: 'polygon',
+      polygonSides: 6,
+      smoothInnerWall: true,
+    };
+    const result = generateVase(params);
+    const polyCount = getPolygons(result).length;
+    expect(polyCount).toBeGreaterThan(0);
+    expect(allVerticesFinite(result)).toBe(true);
+    // With uniform resolution, polygon should have comparable complexity to circle
+    const circleResult = generateVase({ ...TEST_PARAMS_SPIRAL_FIN, crossSection: 'circle', smoothInnerWall: true });
+    const circlePolyCount = getPolygons(circleResult).length;
+    // Polygon should be within the same order of magnitude as circle
+    expect(polyCount).toBeGreaterThan(circlePolyCount * 0.5);
+  });
+
+  it('star + smoothInnerWall produces valid geometry with adequate complexity', () => {
+    const params: VaseParams = {
+      ...TEST_PARAMS_SPIRAL_FIN,
+      crossSection: 'star',
+      starPoints: 5,
+      starInnerRatio: 0.5,
+      smoothInnerWall: true,
+    };
+    const result = generateVase(params);
+    const polyCount = getPolygons(result).length;
+    expect(polyCount).toBeGreaterThan(0);
+    expect(allVerticesFinite(result)).toBe(true);
+    const circleResult = generateVase({ ...TEST_PARAMS_SPIRAL_FIN, crossSection: 'circle', smoothInnerWall: true });
+    const circlePolyCount = getPolygons(circleResult).length;
+    expect(polyCount).toBeGreaterThan(circlePolyCount * 0.5);
+  });
+
   it('smooth vs finned inner wall produce different polygon counts', () => {
     const smooth = generateVase({ ...TEST_PARAMS_SPIRAL_FIN, smoothInnerWall: true });
     const finned = generateVase({ ...TEST_PARAMS_SPIRAL_FIN, smoothInnerWall: false });

@@ -46,13 +46,9 @@ export function buildDecorativeShell(
   const isSpiralFin = params.style === 'spiral-fin' && !skipModulation;
   const skipRidges = skipModulation;
 
-  // Segment count for cross-section
-  let crossSectionSegments =
-    params.crossSection === 'polygon'
-      ? params.polygonSides
-      : params.crossSection === 'star'
-        ? params.starPoints * 2
-        : Math.max(resolution, 32);
+  // Segment count for cross-section — uniform for all shapes since
+  // createCrossSection samples via getBaseRadiusAtAngle for every shape.
+  let crossSectionSegments = Math.max(resolution, 32);
 
   // Spiral-fin needs enough samples per fin cycle for smooth cosine waves
   if (isSpiralFin) {

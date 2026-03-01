@@ -200,6 +200,37 @@ describe('applyRidgeModulation', () => {
     expect(max - min).toBeGreaterThan(0);
   });
 
+  it('sharp profile: modulation stays in [0, 1] for negative angles', () => {
+    // Points in the negative-angle half of the circle (y < 0)
+    const negPoints: [number, number][] = [
+      [10 * Math.cos(-Math.PI / 2), 10 * Math.sin(-Math.PI / 2)],
+      [10 * Math.cos(-Math.PI / 4), 10 * Math.sin(-Math.PI / 4)],
+      [10 * Math.cos(-3 * Math.PI / 4), 10 * Math.sin(-3 * Math.PI / 4)],
+      [10 * Math.cos(-Math.PI), 10 * Math.sin(-Math.PI)],
+    ];
+    const ridgeDepth = 5;
+    const result = applyRidgeModulation(negPoints, 6, ridgeDepth, 'sharp');
+    const radii = result.map(distFromOrigin);
+    for (const r of radii) {
+      expect(r).toBeGreaterThanOrEqual(10 - 0.001);
+      expect(r).toBeLessThanOrEqual(10 + ridgeDepth + 0.001);
+    }
+  });
+
+  it('sharp profile: symmetric modulation at positive and negative angles', () => {
+    const ridgeDepth = 5;
+    const ridgeCount = 6;
+    // Create matching positive/negative angle point pairs
+    const posPoints: [number, number][] = [[10, 0], [0, 10]];
+    const negPoints: [number, number][] = [[10, 0], [0, -10]];
+    const posResult = applyRidgeModulation(posPoints, ridgeCount, ridgeDepth, 'sharp');
+    const negResult = applyRidgeModulation(negPoints, ridgeCount, ridgeDepth, 'sharp');
+    // Both [10, 0] points should produce the same radius
+    expect(distFromOrigin(posResult[0])).toBeCloseTo(distFromOrigin(negResult[0]));
+    // [0, 10] and [0, -10] should produce the same radius (symmetric)
+    expect(distFromOrigin(posResult[1])).toBeCloseTo(distFromOrigin(negResult[1]));
+  });
+
   it('all profiles produce finite coordinates', () => {
     const profiles = ['round', 'sharp', 'flat'] as const;
     for (const profile of profiles) {
@@ -522,14 +553,14 @@ describe('createCrossSection', () => {
     expect(result).toHaveLength(32);
   });
 
-  it('dispatches to polygon generator', () => {
+  it('dispatches to polygon generator and respects segments', () => {
     const result = createCrossSection('polygon', 10, 32, 6, 5, 0.5);
-    expect(result).toHaveLength(6);
+    expect(result).toHaveLength(32);
   });
 
-  it('dispatches to star generator', () => {
+  it('dispatches to star generator and respects segments', () => {
     const result = createCrossSection('star', 10, 32, 6, 5, 0.5);
-    expect(result).toHaveLength(10);
+    expect(result).toHaveLength(32);
   });
 
   it('falls back to circle for unknown crossSection', () => {

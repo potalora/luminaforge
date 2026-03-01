@@ -359,13 +359,11 @@ This ensures continuity between sessions. Never leave work uncommitted or undocu
 ### Known Issues
 
 - **Sharp ridge modulation**: The triangle wave formula can produce modulation values > 1 for negative angles (from `atan2`), meaning ridges can be deeper than `ridgeDepth` in some orientations.
-- **Polygon/star spiral-fin broken**: Polygon and star cross-sections produce malformed geometry in spiral-fin mode. Tracked in [#2](https://github.com/potalora/luminaforge/issues/2).
 - **Lamp CSG tests optimized**: Lamp tests now use `resolution: 16` + reduced heights (matching vase test pattern). Full suite runs in ~20s. Previously took ~13 min due to `DEFAULT_LAMP_PARAMS` using `resolution: 128`.
 - **RidgeProfile valid values**: `'round' | 'sharp' | 'flat'` — NOT `'pointed'`.
 
 ### Planned Next Steps
 
-- **Visual testing**: `PORT=3001 npm run dev` — toggle between Vase/Lamp, verify params work, export STLs
-- **Fix polygon/star spiral-fin bug** ([#2](https://github.com/potalora/luminaforge/issues/2))
+- **Visual testing**: `PORT=3001 npm run dev` — toggle between Vase/Lamp, verify Zen Moss theme, taper slider, export STLs
 - Consider progressive refinement: low-res preview during slider drag, full-res on release
 - Phase 3 lamp-specific features (light patterns, Voronoi cutouts)
