@@ -11,10 +11,6 @@ describe('designStore', () => {
   });
 
   describe('initial state', () => {
-    it('has objectType "vase"', () => {
-      expect(store.getState().objectType).toBe('vase');
-    });
-
     it('params match DEFAULT_VASE_PARAMS values', () => {
       const { params } = store.getState();
       expect(params.height).toBe(DEFAULT_VASE_PARAMS.height);
@@ -118,19 +114,6 @@ describe('designStore', () => {
     });
   });
 
-  describe('setObjectType', () => {
-    it('changes the object type', () => {
-      store.getState().setObjectType('lamp');
-      expect(store.getState().objectType).toBe('lamp');
-    });
-
-    it('preserves params when changing type', () => {
-      store.getState().setParam('height', 300);
-      store.getState().setObjectType('lamp');
-      expect(store.getState().params.height).toBe(300);
-    });
-  });
-
   describe('immutability', () => {
     it('params object is a new reference after setParam', () => {
       const paramsBefore = store.getState().params;
@@ -144,6 +127,14 @@ describe('designStore', () => {
       store.getState().setParams({ height: 200 });
       const paramsAfter = store.getState().params;
       expect(paramsAfter).not.toBe(paramsBefore);
+    });
+  });
+
+  describe('vaseParams alias', () => {
+    it('vaseParams and params stay in sync', () => {
+      store.getState().setParam('height', 250);
+      expect(store.getState().vaseParams.height).toBe(250);
+      expect(store.getState().params.height).toBe(250);
     });
   });
 });

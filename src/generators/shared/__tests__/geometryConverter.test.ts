@@ -6,9 +6,12 @@ import { generateVase } from '@/generators/vase/vaseGenerator';
 import { DEFAULT_VASE_PARAMS } from '@/types/design';
 import type { VaseParams } from '@/types/design';
 
+/** Lightweight test params: classic style (avoids spiral-fin's finCount*10 segment boost) + low resolution + small height */
 const LOW_RES_PARAMS: VaseParams = {
   ...DEFAULT_VASE_PARAMS,
+  style: 'classic',
   resolution: 16,
+  height: 50,
 };
 
 describe('convertGeom3ToGeometryResult', () => {

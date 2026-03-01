@@ -29,25 +29,29 @@ const SHAPES: ShapeOption[] = [
   { value: 'flower', label: 'Flower', family: 'geometric' },
 ];
 
-/** Visual cross-section picker — 4×3 grid of SVG shape outlines */
-export const CrossSectionPicker = React.memo(function CrossSectionPicker() {
-  const crossSection = useDesignStore((s) => s.params.crossSection);
-  const setParam = useDesignStore((s) => s.setParam);
+interface LampCrossSectionPickerProps {
+  part: 'base' | 'shade';
+}
+
+/** Visual cross-section picker for lamp base or shade — 4x3 grid of SVG shape outlines */
+export const LampCrossSectionPicker = React.memo(function LampCrossSectionPicker({ part }: LampCrossSectionPickerProps) {
+  const crossSection = useDesignStore((s) => s.lampParams[part].crossSection);
+  const setter = useDesignStore((s) => part === 'base' ? s.setLampBaseParam : s.setLampShadeParam);
 
   return (
     <div
       className="grid grid-cols-4 gap-2"
-      data-testid="cross-section-picker"
+      data-testid={`lamp-${part}-cross-section-picker`}
       role="radiogroup"
-      aria-label="Cross section shape"
+      aria-label={`${part} cross section shape`}
     >
       {SHAPES.map(({ value, label }) => {
         const isActive = crossSection === value;
         return (
           <button
             key={value}
-            onClick={() => setParam('crossSection', value)}
-            data-testid={`shape-${value}`}
+            onClick={() => setter('crossSection', value)}
+            data-testid={`lamp-${part}-shape-${value}`}
             role="radio"
             aria-checked={isActive}
             className={`

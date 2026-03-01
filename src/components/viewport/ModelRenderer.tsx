@@ -3,15 +3,17 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import type { GeometryResult } from '@/types/geometry';
+import { useDesignStore } from '@/store/designStore';
 
 interface ModelRendererProps {
   geometry: GeometryResult | null;
 }
 
-/** Renders GeometryResult as a Three.js mesh with MeshStandardMaterial */
+/** Renders GeometryResult as a Three.js mesh with appropriate material per object type */
 export const ModelRenderer = React.memo(function ModelRenderer({
   geometry,
 }: ModelRendererProps) {
+  const objectType = useDesignStore((s) => s.objectType);
   const meshRef = useRef<THREE.Mesh>(null);
   const prevGeomRef = useRef<THREE.BufferGeometry | null>(null);
 
@@ -52,11 +54,21 @@ export const ModelRenderer = React.memo(function ModelRenderer({
 
   return (
     <mesh ref={meshRef} geometry={bufferGeometry} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
-      <meshStandardMaterial
-        color="#C4784A"
-        roughness={0.65}
-        metalness={0.03}
-      />
+      {objectType === 'lamp' ? (
+        <meshPhysicalMaterial
+          color="#D4A574"
+          roughness={0.3}
+          transmission={0.4}
+          thickness={2}
+          ior={1.5}
+        />
+      ) : (
+        <meshStandardMaterial
+          color="#C4784A"
+          roughness={0.65}
+          metalness={0.03}
+        />
+      )}
     </mesh>
   );
 });

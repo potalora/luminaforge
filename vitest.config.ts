@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['src/legacy/**', 'node_modules/**'],
     environmentMatchGlobs: [
       ['src/components/**', 'jsdom'],
       ['src/hooks/**', 'jsdom'],
@@ -16,8 +17,8 @@ export default defineConfig({
     pool: 'threads',
     poolOptions: {
       threads: {
-        maxThreads: 8,
-        minThreads: 4,
+        maxThreads: 4,
+        minThreads: 2,
       },
     },
   },

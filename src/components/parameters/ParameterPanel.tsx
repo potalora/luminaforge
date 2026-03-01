@@ -1,7 +1,7 @@
 'use client';
 
 import { useDesignStore } from '@/store/designStore';
-import { ObjectTypeToggle } from './ObjectTypeToggle';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { StyleSelector } from './StyleSelector';
 import { CrossSectionPicker } from './CrossSectionPicker';
 import { ParamSection } from './ParamSection';
@@ -63,7 +63,7 @@ function renderParam(config: ParamConfig, params: VaseParams) {
   }
 }
 
-/** Full parameter panel: object type toggle + style + shape + ridges/fins + advanced */
+/** Full parameter panel: vase params */
 export function ParameterPanel() {
   const params = useDesignStore((s) => s.params);
 
@@ -74,17 +74,20 @@ export function ParameterPanel() {
 
   return (
     <div className="flex flex-col gap-2 p-5 sidebar-gradient">
-      <h1 className="font-display text-xl font-light text-text-primary tracking-wide mb-2">
-        LuminaForge
-      </h1>
-
-      <ObjectTypeToggle />
-
-      <div className="mt-3">
-        <StyleSelector />
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-display text-xl font-light text-text-primary tracking-wide">
+          LuminaForge
+        </h1>
+        <ThemeToggle />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
+        <ParamSection title="Style" defaultOpen>
+          <StyleSelector />
+        </ParamSection>
+      </div>
+
+      <div className="border-t border-bg-tertiary">
         <ParamSection title="Shape" defaultOpen>
           <CrossSectionPicker />
           {filterVisible(CROSS_SECTION_SUB_PARAMS).map((c) => renderParam(c, params as VaseParams))}

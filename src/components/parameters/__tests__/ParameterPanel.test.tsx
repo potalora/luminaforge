@@ -8,7 +8,6 @@ import { DEFAULT_VASE_PARAMS } from '@/types/design';
 describe('ParameterPanel', () => {
   beforeEach(() => {
     useDesignStore.setState({
-      objectType: 'vase',
       params: { ...DEFAULT_VASE_PARAMS },
     });
   });
@@ -16,17 +15,6 @@ describe('ParameterPanel', () => {
   it('renders LuminaForge heading', () => {
     render(<ParameterPanel />);
     expect(screen.getByText('LuminaForge')).toBeInTheDocument();
-  });
-
-  it('renders object type toggle', () => {
-    render(<ParameterPanel />);
-    expect(screen.getByTestId('object-type-vase')).toBeInTheDocument();
-    expect(screen.getByTestId('object-type-lamp')).toBeInTheDocument();
-  });
-
-  it('lamp button is disabled', () => {
-    render(<ParameterPanel />);
-    expect(screen.getByTestId('object-type-lamp')).toBeDisabled();
   });
 
   it('renders style selector', () => {

@@ -38,7 +38,7 @@ export function useGeometryWorker(): {
   }, []);
 
   // Subscribe to param changes and trigger debounced generation
-  const params = useDesignStore((s) => s.params);
+  const vaseParams = useDesignStore((s) => s.params);
 
   useEffect(() => {
     setIsGenerating(true);
@@ -54,7 +54,7 @@ export function useGeometryWorker(): {
       const thisGeneration = ++generationIdRef.current;
 
       try {
-        const result = await api.generateVase(params);
+        const result = await api.generateVase(vaseParams);
 
         // Discard stale results
         if (thisGeneration !== generationIdRef.current) return;
@@ -79,7 +79,7 @@ export function useGeometryWorker(): {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [params]);
+  }, [vaseParams]);
 
   const exportSTL = useCallback(async () => {
     const api = apiRef.current;
@@ -87,13 +87,16 @@ export function useGeometryWorker(): {
 
     try {
       setIsGenerating(true);
-      const stlBuffer = await api.exportSTL(params);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+
+      const stlBuffer = await api.exportSTL(vaseParams);
+      const filename = `luminaforge-vase-${timestamp}.stl`;
+
       const blob = new Blob([stlBuffer], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `luminaforge-vase-${timestamp}.stl`;
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -101,7 +104,7 @@ export function useGeometryWorker(): {
     } finally {
       setIsGenerating(false);
     }
-  }, [params]);
+  }, [vaseParams]);
 
   return { geometry, isGenerating, error, exportSTL };
 }

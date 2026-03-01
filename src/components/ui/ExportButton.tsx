@@ -8,27 +8,29 @@ interface ExportButtonProps {
   isGenerating: boolean;
 }
 
-/** Floating amber export button in bottom-right of viewport */
+/** Floating export button in bottom-right of viewport. */
 export const ExportButton = React.memo(function ExportButton({
   onExport,
   isGenerating,
 }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
+  const disabled = isExporting || isGenerating;
+
   const handleClick = useCallback(async () => {
-    if (isExporting || isGenerating) return;
+    if (disabled) return;
     setIsExporting(true);
     try {
       await onExport();
     } finally {
       setIsExporting(false);
     }
-  }, [onExport, isExporting, isGenerating]);
+  }, [onExport, disabled]);
 
   return (
     <button
       onClick={handleClick}
-      disabled={isExporting}
+      disabled={disabled}
       className="absolute bottom-6 right-6 flex items-center gap-2
         bg-accent-primary hover:bg-accent-secondary
         text-bg-primary font-sans text-sm font-medium
